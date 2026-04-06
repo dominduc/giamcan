@@ -1,0 +1,428 @@
+/* Reset định dạng cơ bản */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f4f4f9; /* Màu nền xám nhạt ngoài lề */
+    display: flex;
+    justify-content: center;
+    height: 100vh; /* Cao bằng 100% màn hình */
+}
+
+/* Khung app (Mô phỏng màn hình điện thoại) */
+#app-container {
+    width: 100%;
+    max-width: 420px; /* Độ rộng chuẩn của smartphone */
+    background-color: #ffffff;
+    height: 100vh;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Vùng chứa nội dung trang */
+.page {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
+    padding-bottom: 70px; /* Chừa chỗ cho thanh menu để không bị che chữ */
+}
+
+/* Các class dùng để ẩn/hiện bằng JavaScript */
+.hidden { display: none; }
+.active { display: block; }
+
+/* Thanh menu dưới đáy */
+#bottom-nav {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #ffffff;
+    display: flex;
+    border-top: 1px solid #eeeeee;
+}
+
+/* Các nút bấm trong menu */
+.nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    color: #888888;
+    transition: 0.2s;
+}
+
+/* Trạng thái khi nút được chọn */
+.nav-btn.active-btn {
+    color: #4CAF50; /* Màu xanh lá chuẩn fitness */
+    font-weight: bold;
+    border-top: 3px solid #4CAF50;
+}
+/* --- TRANG TRÍ CHO TRANG CHỦ --- */
+
+/* Thẻ Tổng Calo nổi bật */
+.summary-card {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+.calorie-display {
+    font-size: 36px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Các thẻ nhập liệu (Bữa ăn, tập, nước) */
+.log-card {
+    background-color: #fcfcfc;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.log-info h4 {
+    color: #333333;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.log-calories {
+    color: #888888;
+    font-size: 13px;
+}
+
+/* Nút bấm dấu cộng */
+.add-btn {
+    background-color: #e8f5e9;
+    color: #4CAF50;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.add-btn:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Đổi màu nhấn nhá cho Tập Thể Dục và Nước cho dễ phân biệt */
+.log-card.exercise .add-btn { background-color: #fff3e0; color: #ff9800; }
+.log-card.exercise .add-btn:hover { background-color: #ff9800; color: white; }
+
+.log-card.water .add-btn { background-color: #e3f2fd; color: #2196f3; }
+.log-card.water .add-btn:hover { background-color: #2196f3; color: white; }
+
+/* --- GIAO DIỆN CỬA SỔ POPUP (MODAL) --- */
+.modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.5); /* Nền đen mờ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.hidden { display: none !important; }
+
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 350px;
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+}
+
+.input-group {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label { margin-bottom: 5px; font-size: 14px; font-weight: bold; }
+.input-group select, .input-group input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px;}
+
+.btn-primary, .btn-success {
+    width: 100%; padding: 12px; border: none; border-radius: 8px;
+    color: white; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+.btn-primary { background-color: #2196F3; }
+.btn-success { background-color: #4CAF50; }
+
+.meal-items-list {
+    margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ccc;
+}
+.meal-items-list ul { list-style: none; padding: 0; margin-top: 10px; max-height: 120px; overflow-y: auto;}
+.meal-items-list li {
+    display: flex; justify-content: space-between; padding: 8px;
+    background: #f9f9f9; border-radius: 5px; margin-bottom: 5px; font-size: 14px;
+}
+.delete-item { color: red; cursor: pointer; font-weight: bold; }
+/* --- TRANG CÁ NHÂN & POPUP MỚI --- */
+.profile-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.target-results { margin-top: 20px; background: #e8f5e9; padding: 20px; border-radius: 12px; border: 1px solid #c8e6c9;}
+.target-box { display: flex; justify-content: space-between; margin-top: 15px; font-size: 16px; border-bottom: 1px dashed #a5d6a7; padding-bottom: 8px;}
+.target-box strong { color: #2E7D32; font-size: 18px; }
+
+/* Các nút chọn nước nhanh */
+.water-presets { display: flex; gap: 10px; margin-top: 15px; }
+.water-presets button { flex: 1; padding: 15px; background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+.water-presets button:hover { background: #2196f3; color: white; }
+/* --- TRANG DINH DƯỠNG --- */
+.macro-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.macro-card {
+    flex: 1;
+    padding: 15px 10px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.macro-card h4 { font-size: 13px; margin-bottom: 8px; font-weight: normal; }
+.macro-card strong { font-size: 20px; }
+
+/* Màu sắc đại diện cho từng chất */
+.protein { background: linear-gradient(135deg, #ef5350, #c62828); } /* Đỏ cho đạm */
+.fat { background: linear-gradient(135deg, #ffca28, #f57f17); color: #333; } /* Vàng cho béo */
+.carb { background: linear-gradient(135deg, #42a5f5, #1565c0); } /* Xanh cho tinh bột */
+
+.micro-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.micro-list { list-style: none; margin-top: 15px; }
+.micro-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+    color: #444;
+}
+/* --- THANH TIẾN TRÌNH MACROS --- */
+.macro-card span {
+    font-size: 13px;
+    opacity: 0.8;
+    display: block;
+    margin-top: 2px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.3); /* Nền mờ mờ */
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%; /* Sẽ được JS thay đổi */
+    background-color: white; /* Thanh chạy màu trắng nổi bật */
+    border-radius: 4px;
+    transition: width 0.4s ease-in-out; /* Hiệu ứng chạy mượt mà */
+}
+
+/* Thẻ fat có chữ màu đen (#333) nên ta đổi thanh chạy cho thẻ béo thành đen/trắng tùy ý */
+.fat .progress-bar { background-color: rgba(0, 0, 0, 0.1); }
+.fat .progress-fill { background-color: #333; }
+/* --- BẢNG TÓM TẮT CALO TRANG CHỦ --- */
+.calorie-dashboard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.cal-item {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.cal-item span { font-size: 18px; font-weight: bold; color: #333; }
+.cal-item label { font-size: 12px; color: #777; margin-top: 5px; }
+
+.cal-math { font-size: 18px; color: #aaa; font-weight: bold; }
+
+.cal-item.highlight span { color: #4caf50; font-size: 22px; }
+.cal-item.highlight label { color: #4caf50; font-weight: bold; }
+/* --- THANH CHỌN NGÀY --- */
+.date-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.date-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #4caf50;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+#date-picker {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #333;
+    outline: none;
+}
+/* ========================================== */
+/* TRANG DINH DƯỠNG (NÂNG CẤP)                */
+/* ========================================== */
+#nutrition-page .summary-card {
+    background: #ffffff; /* Đổi nền thành trắng */
+    color: #333333; /* Chữ màu tối cho dễ đọc */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); /* Đổ bóng nhẹ */
+    border: 1px solid #f0f0f0;
+}
+
+#nutrition-page h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2e7d32; /* Tiêu đề màu xanh lá cây đậm */
+    text-align: center;
+    font-size: 18px;
+}
+
+.macro-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.macro-item > span {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+/* Định dạng thanh tiến trình (Progress Bar) */
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #eeeeee; /* Nền xám nhạt */
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease-in-out;
+}
+/* ==========================================
+   TÔ MÀU NỀN CHO CÁC KHUNG (MÀU PASTEL NHẸ NHÀNG)
+   ========================================== */
+
+/* 1. TRANG CHỦ */
+/* Khung 3 cột Calo: Phủ một lớp màu xanh lá mint cực nhạt để hợp với concept sức khỏe */
+.calorie-dashboard {
+    background-color: #f0fdf4 !important; /* Xanh lá siêu nhạt */
+    border: 1px solid #bbf7d0 !important; /* Viền xanh đồng bộ */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+
+/* Các thẻ Bữa ăn (Sáng, Trưa, Tối, Phụ): Phủ màu xám xanh dương nhạt cho sạch sẽ */
+.log-card {
+    background-color: #f8fafc !important; 
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Riêng thẻ Tập thể dục: Phủ màu cam/vàng nhạt để tạo cảm giác năng lượng */
+.log-card.exercise {
+    background-color: #fff7ed !important; 
+    border: 1px solid #ffedd5 !important;
+}
+
+/* Riêng thẻ Nước: Phủ màu xanh dương nhạt mát mẻ */
+.log-card.water {
+    background-color: #eff6ff !important; 
+    border: 1px solid #dbeafe !important;
+}
+
+/* 2. TRANG DINH DƯỠNG */
+/* Khung Chi tiết Đa lượng: Trở lại màu xám slate nhạt cho chuyên nghiệp */
+#nutrition-page .summary-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Tách các dòng chất (Protein, Fat, Carb) bằng nét đứt mờ */
+.macro-item {
+    border-bottom: 1px dashed #cbd5e1 !important; 
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+}
+.macro-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Khung Vi chất: Phủ màu vàng nhạt/kem (Cream) để tạo điểm nhấn khác biệt */
+.micro-section {
+    background-color: #fdfcee !important;
+    border: 1px solid #fef08a !important;
+}

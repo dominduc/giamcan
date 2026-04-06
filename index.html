@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Giảm Cân Của Tôi</title>
+    <link rel="stylesheet" href="style.css">    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="app-container">
+        
+        <div id="home-page" class="page active">
+            <div class="date-header">
+                <button class="date-btn" onclick="changeDate(-1)">&#9664;</button>
+                <input type="date" id="date-picker" onchange="selectDate(this.value)">
+                <button class="date-btn" onclick="changeDate(1)">&#9654;</button>
+            </div>
+<div class="summary-card">
+                <h3>Bảng Tính Calo Hôm Nay</h3>
+                <div class="calorie-dashboard">
+                    <div class="cal-item">
+                        <span id="summary-target">0</span>
+                        <label>Mục tiêu</label>
+                    </div>
+                    <div class="cal-math">-</div>
+                    <div class="cal-item">
+                        <span id="summary-food">0</span>
+                        <label>Đã nạp</label>
+                    </div>
+                    <div class="cal-math">+</div>
+                    <div class="cal-item">
+                        <span id="summary-burn">0</span>
+                        <label>Thể dục</label>
+                    </div>
+                    <div class="cal-math">=</div>
+                    <div class="cal-item highlight">
+                        <span id="summary-remaining">0</span>
+                        <label>Còn lại</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="log-section">
+                <div class="log-card">
+                    <div class="log-info">
+                        <h4>🍳 Bữa sáng</h4>
+                        <span class="log-calories" id="breakfast-cal">0 kcal</span>
+                    </div>
+                    <button class="add-btn" onclick="openFoodModal('breakfast')">+</button>
+                </div>
+
+                <div class="log-card">
+                    <div class="log-info">
+                        <h4>🍲 Bữa trưa</h4>
+                        <span class="log-calories" id="lunch-cal">0 kcal</span>
+                    </div>
+                    <button class="add-btn" onclick="openFoodModal('lunch')">+</button>
+                </div>
+
+                <div class="log-card">
+                    <div class="log-info">
+                        <h4>🥪 Bữa phụ</h4>
+                        <span class="log-calories" id="snack-cal">0 kcal</span>
+                    </div>
+                    <button class="add-btn" onclick="openFoodModal('snack')">+</button>
+                </div>
+
+                <div class="log-card">
+                    <div class="log-info">
+                        <h4>🥗 Bữa tối</h4>
+                        <span class="log-calories" id="dinner-cal">0 kcal</span>
+                    </div>
+                    <button class="add-btn" onclick="openFoodModal('dinner')">+</button>
+                </div>
+
+                <div class="log-card exercise">
+                    <div class="log-info">
+                        <h4>🏃 Tập thể dục</h4>
+                        <span class="log-calories" id="exercise-cal">0 kcal</span>
+                    </div>
+                    <button class="add-btn" onclick="openExerciseModal()">+</button>
+                </div>
+
+                <div class="log-card water">
+                    <div class="log-info">
+                        <h4>💧 Lượng nước</h4>
+                        <span class="log-calories" id="water-ml">0 ml</span>
+                    </div>
+                    <button class="add-btn" onclick="openWaterModal()">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="nutrition-page" class="page hidden">
+            <h2 style="text-align: center; margin-bottom: 20px;">Thống kê Dinh Dưỡng</h2>
+            
+            <div class="summary-card" style="display: flex; flex-direction: column; align-items: center;">
+                <h3>Tỷ lệ Đa lượng (Macros)</h3>
+                <div style="width: 200px; height: 200px; margin: 15px 0;">
+                    <canvas id="macroChart"></canvas>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Chi tiết Đa lượng</h3>
+                <div class="macro-item">
+                    <span>Protein: <span id="total-protein">0g</span> <span id="target-protein-text">/ 0g</span></span>
+                    <div class="progress-bar"><div id="progress-protein" class="progress" style="width: 0%; background: #e53935;"></div></div>
+                </div>
+                <div class="macro-item">
+                    <span>Chất béo (Fat): <span id="total-fat">0g</span> <span id="target-fat-text">/ 0g</span></span>
+                    <div class="progress-bar"><div id="progress-fat" class="progress" style="width: 0%; background: #fb8c00;"></div></div>
+                </div>
+                <div class="macro-item">
+                    <span>Tinh bột (Carb): <span id="total-carb">0g</span> <span id="target-carb-text">/ 0g</span></span>
+                    <div class="progress-bar"><div id="progress-carb" class="progress" style="width: 0%; background: #43a047;"></div></div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Vi chất quan trọng (Micros)</h3>
+                
+                <div class="macro-item">
+                    <span>Chất xơ: <span id="total-fiber">0g</span> <span style="color:#777">/ 25g (Tối thiểu)</span></span>
+                    <div class="progress-bar"><div id="progress-fiber" class="progress" style="width: 0%; background: #8d6e63;"></div></div>
+                </div>
+                
+                <div class="macro-item">
+                    <span>Vitamin C: <span id="total-vitC">0mg</span> <span style="color:#777">/ 90mg (Tối thiểu)</span></span>
+                    <div class="progress-bar"><div id="progress-vitC" class="progress" style="width: 0%; background: #fdd835;"></div></div>
+                </div>
+
+                <div class="macro-item">
+                    <span>Omega-3: <span id="total-omega">0g</span> <span style="color:#777">/ 1.6g (Tối thiểu)</span></span>
+                    <div class="progress-bar"><div id="progress-omega" class="progress" style="width: 0%; background: #00acc1;"></div></div>
+                </div>
+
+                <div class="macro-item">
+                    <span>Cholesterol: <span id="total-cholesterol">0mg</span> <span style="color:#777">/ 300mg (Tối đa)</span></span>
+                    <div class="progress-bar"><div id="progress-cholesterol" class="progress" style="width: 0%; background: #d81b60;"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="personal-page" class="page hidden p-4">
+    <h2 class="text-xl font-bold mb-4 flex items-center">
+        <span class="mr-2">👤</span> Hồ Sơ & Mục Tiêu
+    </h2>
+
+    <details class="bg-white p-4 rounded-lg shadow-sm mb-4 border border-gray-100">
+        <summary class="font-bold text-gray-700 cursor-pointer focus:outline-none">
+            Chỉnh sửa thông số cơ thể (Tuổi, Cao, Nặng...)
+        </summary>
+        <div class="mt-4 space-y-3">
+            <div>
+                <label class="block text-sm font-bold mb-1">Giới tính:</label>
+                <select id="user-gender" class="w-full p-2 border rounded shadow-sm">
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Tuổi:</label>
+                    <input type="number" id="user-age" placeholder="25" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Cao (cm):</label>
+                    <input type="number" id="user-height" placeholder="170" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nặng (kg):</label>
+                    <input type="number" id="user-weight" placeholder="70" class="w-full p-2 border rounded">
+                </div>
+            </div>
+            <button onclick="calculateTargets()" class="w-full bg-blue-500 text-white p-2 rounded-lg font-bold mt-2 hover:bg-blue-600 transition">
+                Cập Nhật Chỉ Số BMR
+            </button>
+        </div>
+    </details>
+
+    <details class="bg-white p-4 rounded-lg shadow-sm mb-4 border border-gray-100" id="goal-settings">
+        <summary class="font-bold text-gray-700 cursor-pointer focus:outline-none">
+            Thiết lập lộ trình giảm cân
+        </summary>
+        <div class="mt-4 space-y-3">
+            <div>
+                <label class="block text-sm font-bold mb-1">Cân nặng mục tiêu (kg):</label>
+                <input type="number" id="target-weight" placeholder="Ví dụ: 65" class="w-full p-2 border rounded">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Ngày bắt đầu:</label>
+                    <input type="date" id="start-date" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Ngày kết thúc:</label>
+                    <input type="date" id="end-date" class="w-full p-2 border rounded">
+                </div>
+            </div>
+            <button onclick="saveWeightGoal()" class="w-full bg-green-500 text-white p-2 rounded-lg font-bold mt-2 hover:bg-green-600 transition">
+                Lưu Lộ Trình & Tính Toán
+            </button>
+        </div>
+    </details>
+
+    <div id="goal-summary" class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500 mb-4 hidden">
+        <p class="text-sm text-blue-800">Mục tiêu giảm: <b id="weight-to-lose">0</b> kg</p>
+        <p class="text-sm text-blue-800">Cần giảm mỗi tuần: <b id="weight-per-week">0</b> kg</p>
+        <p class="text-sm text-blue-800 italic mt-1">Đường kẻ mục tiêu trên biểu đồ đã được cập nhật!</p>
+    </div>
+
+<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-gray-600 text-sm">Biểu Đồ Cân Nặng</h3>
+            
+            <div class="flex space-x-1">
+                <button onclick="zoomChart(1)" class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs font-bold text-gray-600 hover:bg-gray-200 focus:bg-blue-500 focus:text-white transition">1x</button>
+                <button onclick="zoomChart(2)" class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs font-bold text-gray-600 hover:bg-gray-200 focus:bg-blue-500 focus:text-white transition">2x</button>
+                <button onclick="zoomChart(3)" class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs font-bold text-gray-600 hover:bg-gray-200 focus:bg-blue-500 focus:text-white transition">3x</button>
+            </div>
+        </div>
+        
+        <div id="chart-scroll-box" class="w-full overflow-x-auto overflow-y-hidden rounded scroll-smooth">
+            <div id="chart-wrapper" style="width: 100%; height: 300px; transition: width 0.3s ease;">
+                <canvas id="weightChart"></canvas>
+            </div>
+        </div>
+    </div>
+<div class="mt-8 border-t border-gray-200 pt-6 mb-8 flex flex-col items-center">
+        <button onclick="resetAllData()" class="bg-white border border-red-500 text-red-500 px-4 py-2 rounded-md text-sm font-bold hover:bg-red-50 transition flex items-center shadow-sm">
+            <span class="mr-2">⚠️</span> Xoá Toàn Bộ Dữ Liệu
+        </button>
+        <p class="text-xs text-gray-400 mt-2 text-center max-w-xs">
+            Hành động này sẽ xoá sạch hồ sơ, mục tiêu và toàn bộ lịch sử. Không thể hoàn tác.
+        </p>
+    </div>
+
+</div>
+
+        <div id="food-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <h3 id="modal-title">Thêm món ăn</h3>
+                <div class="input-group">
+                    <label>Chọn món ăn (100g chuẩn):</label>
+                    <select id="food-select"></select>
+                </div>
+                <div class="input-group">
+                    <label>Khối lượng (Gram):</label>
+                    <input type="number" id="food-gram" placeholder="Ví dụ: 150" min="1">
+                </div>
+                <button class="btn-primary" onclick="addFoodToMeal()">Thêm vào bữa</button>
+                <div class="meal-items-list">
+                    <h4>Các món trong bữa này:</h4>
+                    <ul id="current-meal-items"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-success" onclick="saveMeal()">Lưu & Cập nhật</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="exercise-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeExerciseModal()">&times;</span>
+                <h3>Thêm bài tập</h3>
+                <div class="input-group">
+                    <label>Chọn hoạt động:</label>
+                    <select id="exercise-select">
+                        <option value="8">Chạy bộ (Tốc độ trung bình)</option>
+                        <option value="4">Đi bộ nhanh</option>
+                        <option value="6">Đạp xe</option>
+                        <option value="7">Bơi lội</option>
+                        <option value="5">Tập Gym (Tạ)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Thời gian tập (Phút):</label>
+                    <input type="number" id="exercise-time" placeholder="Ví dụ: 30" min="1">
+                </div>
+                <button class="btn-success" onclick="saveExercise()">Lưu Bài Tập</button>
+            </div>
+        </div>
+
+        <div id="water-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeWaterModal()">&times;</span>
+                <h3>Uống nước</h3>
+                <div class="water-presets">
+                    <button onclick="addWater(250)">+ 250ml (1 Cốc)</button>
+                    <button onclick="addWater(500)">+ 500ml (1 Chai)</button>
+                </div>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Hoặc nhập số ml tùy ý:</label>
+                    <input type="number" id="water-ml-input" placeholder="Ví dụ: 300">
+                </div>
+                <button class="btn-success" onclick="saveCustomWater()">Thêm Nước</button>
+            </div>
+        </div>
+
+        <nav id="bottom-nav">
+            <button class="nav-btn active-btn" onclick="switchPage('home-page', this)">Trang chủ</button>
+            <button class="nav-btn" onclick="switchPage('nutrition-page', this)">Dinh dưỡng</button>
+            <button class="nav-btn" onclick="switchPage('personal-page', this)">Cá nhân</button>
+        </nav>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
