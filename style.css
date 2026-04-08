@@ -524,3 +524,6 @@ body {
     opacity: 1 !important;
     transform: translateY(0) !important;
 }
+body {
+    padding-bottom: 80px; /* Đẩy toàn bộ trang lên một đoạn bằng đúng chiều cao thanh điều hướng */
+}
