@@ -229,6 +229,20 @@
             </div>
         </div>
     </div>
+    <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+    <h3 class="font-bold text-blue-800 mb-2">⚖️ Check-in Cân Nặng Hàng Tuần</h3>
+    <p id="weight-reminder-msg" class="text-sm text-red-600 font-bold mb-3 hidden">
+        Đã đến lúc cập nhật cân nặng tuần này!
+    </p>
+    <div class="flex gap-2">
+        <input type="number" id="weekly-weight-input" placeholder="Ví dụ: 91" class="border p-2 rounded w-full">
+        <span class="p-2 text-gray-600">kg</span>
+        <button onclick="updateWeeklyWeight()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 whitespace-nowrap">
+            Cập nhật
+        </button>
+    </div>
+    <p class="text-xs text-gray-500 mt-2 italic">*Hệ thống sẽ tự động tính lại Calo và Macro dựa trên số cân mới nhất của bạn.</p>
+</div>
 <div class="mt-8 border-t border-gray-200 pt-6 mb-8 flex flex-col items-center">
         <button onclick="resetAllData()" class="bg-white border border-red-500 text-red-500 px-4 py-2 rounded-md text-sm font-bold hover:bg-red-50 transition flex items-center shadow-sm">
             <span class="mr-2">⚠️</span> Xoá Toàn Bộ Dữ Liệu

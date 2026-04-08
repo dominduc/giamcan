@@ -5,11 +5,19 @@ let dailyData = { breakfast: [], lunch: [], snack: [], dinner: [] };
 let currentEditingMeal = '';
 let targetMacros = { protein: 0, fat: 0, carb: 0 }; 
 let dailyTargetCal = 0; 
-let dailyTargetWater = 0; // Thêm biến này để lưu mục tiêu nước
+let dailyTargetWater = 0; 
 let totalExerciseCal = 0;
 let totalWaterMl = 0;
-let currentDateString = ''; // Lưu ngày đang xem
+let currentDateString = ''; 
 
+let weightGoal = {
+    targetWeight: 0,
+    startDate: '',
+    endDate: '',
+    weightPerWeek: 0
+};
+let weightChartInstance = null;
+let macroChartInstance = null;
 
 // ==========================================   
 // 2. KHỞI TẠO & QUẢN LÝ NGÀY THÁNG
@@ -32,7 +40,7 @@ window.onload = function() {
     // Gắn vào thanh Lịch
     document.getElementById('date-picker').value = currentDateString;
 
-    // Tải dữ liệu của ngày hôm nay
+    // Tải dữ liệu
     loadFromLocalStorage();
 };
 
@@ -128,7 +136,6 @@ function removeFood(itemId) {
     dailyData[currentEditingMeal] = dailyData[currentEditingMeal].filter(item => item.id !== itemId);
     renderModalList();
     
-    // Cập nhật giao diện bên ngoài
     const totalMealCal = dailyData[currentEditingMeal].reduce((sum, item) => sum + item.calories, 0);
     document.getElementById(`${currentEditingMeal}-cal`).innerText = `${Math.round(totalMealCal)} kcal`;
     
@@ -147,7 +154,6 @@ function saveMeal() {
     saveToLocalStorage();
 }
 
-// Bảng Tóm Tắt Calo
 function updateTotalCalories() {
     let foodTotal = 0;
     
@@ -224,14 +230,36 @@ function calculateTargets() {
     const height = parseFloat(document.getElementById('user-height').value);
     const weight = parseFloat(document.getElementById('user-weight').value);
 
-    if (!age || !height || !weight) { alert('Vui lòng nhập đầy đủ thông tin!'); return; }
+    if (!age || !height || !weight) { alert('Vui lòng nhập đầy đủ tuổi, chiều cao, cân nặng!'); return; }
+
+    // LƯU THÔNG TIN CƠ BẢN VÀO LOCALSTORAGE ĐỂ F5 KHÔNG MẤT
+    localStorage.setItem('myBasicInfo', JSON.stringify({ gender, age, height, weight }));
 
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === 'male') ? 5 : -161;
-
     let tdee = bmr * 1.2;
-    dailyTargetCal = tdee - 500;
-    dailyTargetWater = weight * 35; // Tính mục tiêu nước
+
+    // TÍNH TOÁN THAY ĐỔI CALO TĂNG/GIẢM CÂN DỰA TRÊN LỘ TRÌNH
+    let dailyCalAdjustment = 0; 
+    if (weightGoal && weightGoal.targetWeight > 0 && weightGoal.startDate && weightGoal.endDate) {
+        const d1 = new Date(weightGoal.startDate);
+        const d2 = new Date(weightGoal.endDate);
+        const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 0) {
+            const totalDiff = weightGoal.targetWeight - weight; // Âm = Giảm cân, Dương = Tăng cân
+            // 1kg thay đổi ~ 7700 kcal
+            dailyCalAdjustment = (totalDiff * 7700) / diffDays;
+        }
+    }
+
+    dailyTargetCal = tdee + dailyCalAdjustment;
+    
+    // Safety net: Không để calo quá thấp gây suy nhược
+    if (gender === 'male' && dailyTargetCal < 1500 && dailyCalAdjustment < 0) dailyTargetCal = 1500;
+    if (gender === 'female' && dailyTargetCal < 1200 && dailyCalAdjustment < 0) dailyTargetCal = 1200;
+
+    dailyTargetWater = weight * 35;
 
     targetMacros.protein = Math.round((dailyTargetCal * 0.3) / 4);
     targetMacros.fat = Math.round((dailyTargetCal * 0.3) / 9);
@@ -241,24 +269,72 @@ function calculateTargets() {
     document.getElementById('target-fat-text').innerText = `/ ${targetMacros.fat}g`;
     document.getElementById('target-carb-text').innerText = `/ ${targetMacros.carb}g`;
 
-    document.getElementById('target-cal-display').innerText = `${Math.round(dailyTargetCal)} kcal`;
-    document.getElementById('target-water-display').innerText = `${Math.round(dailyTargetWater)} ml`;
+    const calDisplay = document.getElementById('target-cal-display');
+    if (calDisplay) calDisplay.innerText = `${Math.round(dailyTargetCal)} kcal`;
+    
+    const waterDisplay = document.getElementById('target-water-display');
+    if (waterDisplay) waterDisplay.innerText = `${Math.round(dailyTargetWater)} ml`;
     
     updateNutrition(); 
     updateTotalCalories();
     saveToLocalStorage();
-    alert('Đã tạo thành công mục tiêu dành riêng cho bạn!');
+    
+    alert(`Đã cập nhật chỉ số!\nTDEE (Giữ cân): ${Math.round(tdee)} kcal.\nMục tiêu hàng ngày của bạn: ${Math.round(dailyTargetCal)} kcal.`);
 }
 
-// Khai báo biến biểu đồ (để trống ở ngoài cùng, trên phần TÍNH TOÁN)
-let macroChartInstance = null;
+function saveWeightGoal() {
+    const targetW = parseFloat(document.getElementById('target-weight').value);
+    const startD = document.getElementById('start-date').value;
+    const endD = document.getElementById('end-date').value;
+    const currentW = parseFloat(document.getElementById('user-weight').value);
+
+    if (!targetW || !startD || !endD || !currentW) {
+        alert("Vui lòng nhập cân nặng hiện tại (ở trên), cân nặng mục tiêu và ngày tháng!");
+        return;
+    }
+
+    const d1 = new Date(startD);
+    const d2 = new Date(endD);
+    const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) {
+        alert("Ngày kết thúc phải sau ngày bắt đầu!");
+        return;
+    }
+
+    const weeks = diffDays / 7;
+    const totalDiff = targetW - currentW; // Âm = giảm, Dương = tăng
+    
+    weightGoal = {
+        targetWeight: targetW,
+        startDate: startD,
+        endDate: endD,
+        weightPerWeek: (Math.abs(totalDiff) / weeks).toFixed(2)
+    };
+
+    // Hiển thị tóm tắt thông minh tuỳ thuộc tăng hay giảm cân
+    const goalSummary = document.getElementById('goal-summary');
+    goalSummary.classList.remove('hidden');
+    const isGain = totalDiff > 0;
+    
+    goalSummary.innerHTML = `
+        <p class="text-sm text-blue-800">Mục tiêu: <b>${isGain ? 'Tăng' : 'Giảm'} ${Math.abs(totalDiff).toFixed(1)}</b> kg</p>
+        <p class="text-sm text-blue-800">Tiến độ: <b>${weightGoal.weightPerWeek}</b> kg / tuần</p>
+        <p class="text-sm text-blue-800 italic mt-1">Hệ thống đã tự điều chỉnh lại Calo hàng ngày!</p>
+    `;
+
+    document.getElementById('goal-settings').removeAttribute('open');
+    localStorage.setItem('myWeightGoal', JSON.stringify(weightGoal));
+    
+    // Ép hệ thống tính lại calo theo mục tiêu mới
+    calculateTargets();
+    updateWeightChart(); 
+}
 
 function updateNutrition() {
     let totalPro = 0; let totalFat = 0; let totalCarb = 0;
-    // Khởi tạo biến cho vi chất
     let totalFiber = 0; let totalVitC = 0; let totalOmega = 0; let totalCholesterol = 0;
 
-    // Tính tổng tất cả các chất từ các bữa ăn
     for (let meal in dailyData) {
         dailyData[meal].forEach(item => {
             const foodInfo = foodDatabase.find(f => f.name === item.name);
@@ -267,7 +343,6 @@ function updateNutrition() {
                 totalPro += ratio * foodInfo.protein;
                 totalFat += ratio * foodInfo.fat;
                 totalCarb += ratio * foodInfo.carb;
-                
                 totalFiber += ratio * (foodInfo.fiber || 0);
                 totalVitC += ratio * (foodInfo.vitC || 0);
                 totalOmega += ratio * (foodInfo.omega3 || 0);
@@ -276,7 +351,6 @@ function updateNutrition() {
         });
     }
 
-    // 1. Cập nhật Đa lượng (Macros)
     document.getElementById('total-protein').innerText = totalPro.toFixed(1) + 'g';
     document.getElementById('total-fat').innerText = totalFat.toFixed(1) + 'g';
     document.getElementById('total-carb').innerText = totalCarb.toFixed(1) + 'g';
@@ -289,26 +363,22 @@ function updateNutrition() {
     document.getElementById('progress-fat').style.width = fatPercent + '%';
     document.getElementById('progress-carb').style.width = carbPercent + '%';
 
-    // 2. Cập nhật Vi lượng (Micros) với mục tiêu mặc định chuẩn Y tế
-    const TARGET_FIBER = 25; // 25g
-    const TARGET_VITC = 90; // 90mg
-    const TARGET_OMEGA = 1.6; // 1.6g
-    const MAX_CHOLESTEROL = 300; // 300mg (Tối đa)
+    const TARGET_FIBER = 25; 
+    const TARGET_VITC = 90; 
+    const TARGET_OMEGA = 1.6; 
+    const MAX_CHOLESTEROL = 300; 
 
     document.getElementById('total-fiber').innerText = totalFiber.toFixed(1) + 'g';
     document.getElementById('progress-fiber').style.width = Math.min((totalFiber / TARGET_FIBER) * 100, 100) + '%';
-
     document.getElementById('total-vitC').innerText = totalVitC.toFixed(1) + 'mg';
     document.getElementById('progress-vitC').style.width = Math.min((totalVitC / TARGET_VITC) * 100, 100) + '%';
-
     document.getElementById('total-omega').innerText = totalOmega.toFixed(1) + 'g';
     document.getElementById('progress-omega').style.width = Math.min((totalOmega / TARGET_OMEGA) * 100, 100) + '%';
-
     document.getElementById('total-cholesterol').innerText = totalCholesterol.toFixed(1) + 'mg';
+    
     let cholPercent = Math.min((totalCholesterol / MAX_CHOLESTEROL) * 100, 100);
     document.getElementById('progress-cholesterol').style.width = cholPercent + '%';
     
-    // Cảnh báo Cholesterol (Nếu vượt 300mg sẽ đổi màu đỏ gắt)
     if (totalCholesterol > MAX_CHOLESTEROL) {
         document.getElementById('total-cholesterol').style.color = 'red';
         document.getElementById('total-cholesterol').style.fontWeight = 'bold';
@@ -317,14 +387,10 @@ function updateNutrition() {
         document.getElementById('total-cholesterol').style.fontWeight = 'normal';
     }
 
-    // 3. Vẽ Biểu đồ Tròn (Doughnut Chart)
     const ctx = document.getElementById('macroChart');
-    if (ctx) { // Đảm bảo thẻ canvas tồn tại
-        if (macroChartInstance) {
-            macroChartInstance.destroy(); // Xóa biểu đồ cũ để vẽ cái mới
-        }
+    if (ctx) {
+        if (macroChartInstance) macroChartInstance.destroy();
         
-        // Chỉ vẽ khi có dữ liệu ăn uống (Tổng > 0)
         if (totalPro > 0 || totalFat > 0 || totalCarb > 0) {
             macroChartInstance = new Chart(ctx.getContext('2d'), {
                 type: 'doughnut',
@@ -347,10 +413,9 @@ function updateNutrition() {
 }
 
 // ==========================================
-// 7. LƯU TRỮ LOCAL STORAGE (THEO NGÀY)
+// 7. LƯU TRỮ LOCAL STORAGE 
 // ==========================================
 function saveToLocalStorage() {
-    // 1. Lưu Profile (Không bị ảnh hưởng khi đổi ngày)
     const profileData = { 
         targetMacros: targetMacros, 
         dailyTargetCal: dailyTargetCal,
@@ -358,7 +423,6 @@ function saveToLocalStorage() {
     };
     localStorage.setItem('myFitnessProfile', JSON.stringify(profileData));
     
-    // 2. Lưu Lịch sử theo ngày đang chọn
     let allHistory = JSON.parse(localStorage.getItem('myFitnessHistory')) || {};
     allHistory[currentDateString] = { 
         dailyData: dailyData, 
@@ -369,7 +433,17 @@ function saveToLocalStorage() {
 }
 
 function loadFromLocalStorage() {
-    // 1. Tải Profile & Mục tiêu
+    // 1. Phục hồi thông số cơ thể ra các ô nhập (QUAN TRỌNG ĐỂ TRÁNH MẤT DỮ LIỆU)
+    const savedBasic = localStorage.getItem('myBasicInfo');
+    if (savedBasic) {
+        const basicInfo = JSON.parse(savedBasic);
+        if (document.getElementById('user-gender')) document.getElementById('user-gender').value = basicInfo.gender || 'male';
+        if (document.getElementById('user-age')) document.getElementById('user-age').value = basicInfo.age || '';
+        if (document.getElementById('user-height')) document.getElementById('user-height').value = basicInfo.height || '';
+        if (document.getElementById('user-weight')) document.getElementById('user-weight').value = basicInfo.weight || '';
+    }
+
+    // 2. Tải Profile & Mục tiêu Calo
     const savedProfile = localStorage.getItem('myFitnessProfile');
     if (savedProfile) {
         const parsed = JSON.parse(savedProfile);
@@ -377,40 +451,42 @@ function loadFromLocalStorage() {
         dailyTargetCal = parsed.dailyTargetCal || 0;
         dailyTargetWater = parsed.dailyTargetWater || 0;
         
-        // Kiểm tra xem các thẻ hiển thị mục tiêu có tồn tại trên trang hiện tại không
-        const calDisp = document.getElementById('target-cal-display');
-        const waterDisp = document.getElementById('target-water-display');
         const proText = document.getElementById('target-protein-text');
         const fatText = document.getElementById('target-fat-text');
         const carbText = document.getElementById('target-carb-text');
 
         if (dailyTargetCal > 0) {
-            if (calDisp) calDisp.innerText = `${Math.round(dailyTargetCal)} kcal`;
-            if (waterDisp) waterDisp.innerText = `${Math.round(dailyTargetWater)} ml`; 
             if (proText) proText.innerText = `/ ${targetMacros.protein}g`;
             if (fatText) fatText.innerText = `/ ${targetMacros.fat}g`;
             if (carbText) carbText.innerText = `/ ${targetMacros.carb}g`;
         }
     }
 
-    // 2. Tải lộ trình giảm cân (Mục tiêu cân nặng mới thêm)
+    // 3. Tải lộ trình giảm/tăng cân
     const savedGoal = localStorage.getItem('myWeightGoal');
     const goalSummary = document.getElementById('goal-summary');
     if (savedGoal && goalSummary) {
         weightGoal = JSON.parse(savedGoal);
         goalSummary.classList.remove('hidden');
         
-        const weightToLoseEl = document.getElementById('weight-to-lose');
-        const weightPerWeekEl = document.getElementById('weight-per-week');
-        const userWeightEl = document.getElementById('user-weight');
-
-        if (weightToLoseEl && userWeightEl && userWeightEl.value) {
-             weightToLoseEl.innerText = (parseFloat(userWeightEl.value) - weightGoal.targetWeight).toFixed(1);
+        const currentWeight = parseFloat(document.getElementById('user-weight').value) || 0;
+        if(currentWeight > 0) {
+            const totalDiff = weightGoal.targetWeight - currentWeight;
+            const isGain = totalDiff > 0;
+            goalSummary.innerHTML = `
+                <p class="text-sm text-blue-800">Mục tiêu: <b>${isGain ? 'Tăng' : 'Giảm'} ${Math.abs(totalDiff).toFixed(1)}</b> kg</p>
+                <p class="text-sm text-blue-800">Tiến độ: <b>${weightGoal.weightPerWeek}</b> kg / tuần</p>
+                <p class="text-sm text-blue-800 italic mt-1">Đường kẻ mục tiêu trên biểu đồ đã được cập nhật!</p>
+            `;
         }
-        if (weightPerWeekEl) weightPerWeekEl.innerText = weightGoal.weightPerWeek;
+        
+        // Gắn lại vào ô nhập liệu
+        if(document.getElementById('target-weight')) document.getElementById('target-weight').value = weightGoal.targetWeight || '';
+        if(document.getElementById('start-date')) document.getElementById('start-date').value = weightGoal.startDate || '';
+        if(document.getElementById('end-date')) document.getElementById('end-date').value = weightGoal.endDate || '';
     }
 
-    // 3. Tải Dữ liệu của ngày hiện tại
+    // 4. Tải Dữ liệu ăn uống/tập luyện của ngày hiện tại
     let allHistory = JSON.parse(localStorage.getItem('myFitnessHistory')) || {};
     let dayData = allHistory[currentDateString];
 
@@ -424,7 +500,7 @@ function loadFromLocalStorage() {
         totalWaterMl = 0;
     }
 
-    // 4. Render lại toàn bộ giao diện
+    // 5. Render lại toàn bộ giao diện
     updateTotalCalories();
     updateNutrition();
     updateWaterDisplay();
@@ -439,86 +515,15 @@ function loadFromLocalStorage() {
 
     const exCalEl = document.getElementById('exercise-cal');
     if (exCalEl) exCalEl.innerText = `${Math.round(totalExerciseCal)} kcal`;
-}
-// Thêm biến toàn cục mới
-let weightGoal = {
-    targetWeight: 0,
-    startDate: '',
-    endDate: '',
-    weightPerWeek: 0
-};
-let weightChartInstance = null;
-
-// Hàm lưu mục tiêu giảm cân
-function saveWeightGoal() {
-    const targetW = parseFloat(document.getElementById('target-weight').value);
-    const startD = document.getElementById('start-date').value;
-    const endD = document.getElementById('end-date').value;
-    const currentW = parseFloat(document.getElementById('user-weight').value);
-
-    if (!targetW || !startD || !endD || !currentW) {
-        alert("Vui lòng nhập đầy đủ thông tin hồ sơ và mục tiêu!");
-        return;
-    }
-
-    // Tính toán số tuần
-    const d1 = new Date(startD);
-    const d2 = new Date(endD);
-    const diffTime = Math.abs(d2 - d1);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const weeks = diffDays / 7;
-
-    if (weeks <= 0) {
-        alert("Ngày kết thúc phải sau ngày bắt đầu!");
-        return;
-    }
-
-    const totalLoss = currentW - targetW;
-    weightGoal = {
-        targetWeight: targetW,
-        startDate: startD,
-        endDate: endD,
-        weightPerWeek: (totalLoss / weeks).toFixed(2)
-    };
-
-    // Hiển thị tóm tắt
-    document.getElementById('goal-summary').classList.remove('hidden');
-    document.getElementById('weight-to-lose').innerText = totalLoss.toFixed(1);
-    document.getElementById('weight-per-week').innerText = weightGoal.weightPerWeek;
-
-    // Đóng phần nhập liệu lại cho gọn
-    document.getElementById('goal-settings').removeAttribute('open');
-
-    // Lưu vào LocalStorage
-    localStorage.setItem('myWeightGoal', JSON.stringify(weightGoal));
-    
-    alert("Đã lưu mục tiêu! Hãy tiếp tục ghi chép ăn uống hàng ngày để cập nhật biểu đồ.");
-    
-    // Ở bước sau chúng ta sẽ viết hàm vẽ biểu đồ tại đây
-    localStorage.setItem('myWeightGoal', JSON.stringify(weightGoal));
-    
-    // THÊM DÒNG NÀY VÀO CUỐI HÀM
-    updateWeightChart(); 
-    
-    alert("Đã lưu mục tiêu và cập nhật biểu đồ!");
+    // Kiểm tra xem đã đến lúc cần cập nhật cân nặng chưa
+    checkWeightReminder();
 }
 
-// Cập nhật lại hàm loadFromLocalStorage để lấy lại mục tiêu đã lưu
-// (Bạn hãy tìm hàm loadFromLocalStorage cũ và thêm đoạn này vào cuối)
-function loadWeightGoal() {
-    const savedGoal = localStorage.getItem('myWeightGoal');
-    if (savedGoal) {
-        weightGoal = JSON.parse(savedGoal);
-        document.getElementById('goal-summary').classList.remove('hidden');
-        document.getElementById('weight-to-lose').innerText = (parseFloat(document.getElementById('user-weight').value) - weightGoal.targetWeight).toFixed(1);
-        document.getElementById('weight-per-week').innerText = weightGoal.weightPerWeek;
-    }
-}
+// Biểu đồ cân nặng
 function updateWeightChart() {
     const ctx = document.getElementById('weightChart');
     if (!ctx || !weightGoal.startDate || !weightGoal.endDate) return;
 
-    // 1. Tạo danh sách các ngày từ ngày bắt đầu đến ngày kết thúc
     let labels = [];
     let targetData = [];
     let actualData = [];
@@ -528,14 +533,12 @@ function updateWeightChart() {
     let currentWeight = parseFloat(document.getElementById('user-weight').value) || 0;
     let targetWeight = weightGoal.targetWeight;
 
-    // Tính tổng số ngày trong lộ trình
     let totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     if (totalDays <= 0) return;
 
-    // Tính mức giảm cân cần thiết mỗi ngày (Lý thuyết)
-    let weightLossPerDay = (currentWeight - targetWeight) / totalDays;
+    // Tính mức thay đổi mỗi ngày (Dùng cho cả tăng và giảm)
+    let weightChangePerDay = (targetWeight - currentWeight) / totalDays;
 
-    // 2. Chuẩn bị dữ liệu cho từng ngày
     let runningActualWeight = currentWeight;
 
     for (let i = 0; i <= totalDays; i++) {
@@ -543,13 +546,11 @@ function updateWeightChart() {
         d.setDate(d.getDate() + i);
         let dateStr = d.toISOString().split('T')[0];
 
-        // Nhãn trục hoành (In đậm mốc đầu tuần)
         labels.push(i % 7 === 0 ? `Tuần ${i/7}` : dateStr.split('-').slice(1).join('/'));
 
-        // Dữ liệu đường MỤC TIÊU (Giảm đều mỗi ngày)
-        targetData.push((currentWeight - (i * weightLossPerDay)).toFixed(2));
+        // Mục tiêu chạy tuyến tính từ Cân hiện tại -> Cân mục tiêu
+        targetData.push((currentWeight + (i * weightChangePerDay)).toFixed(2));
 
-        // Dữ liệu đường THỰC TẾ (Dựa trên lịch sử ăn uống)
         let allHistory = JSON.parse(localStorage.getItem('myFitnessHistory')) || {};
         if (allHistory[dateStr]) {
             let dayData = allHistory[dateStr];
@@ -557,19 +558,19 @@ function updateWeightChart() {
             for (let meal in dayData.dailyData) {
                 foodCal += dayData.dailyData[meal].reduce((sum, item) => sum + item.calories, 0);
             }
-            // Logic: Thâm hụt 7700 calo = giảm 1kg. TDEE giả định lấy từ dailyTargetCal + 500 (vì target thường là TDEE - 500)
-            let dailyTDEE = dailyTargetCal + 500; 
+            
+            // TDEE = Tổng tiêu hao (Không cộng trừ mục tiêu).
+            let dailyTDEE = (dailyTargetCal > 0) ? (dailyTargetCal - (dailyTargetCal - Math.round(dailyTargetCal))) : 2000; // Ước tính nếu lỗi
+            
             let netCal = foodCal - (dailyTDEE + dayData.totalExerciseCal);
-            let weightChange = netCal / 7700;
+            let weightChange = netCal / 7700; // Thâm hụt = âm, Thặng dư = dương
             runningActualWeight += weightChange;
             actualData.push(runningActualWeight.toFixed(2));
         } else {
-            // Nếu chưa đến ngày đó hoặc không có dữ liệu, để null để đường biểu đồ không bị rớt xuống 0
             actualData.push(i === 0 ? currentWeight : null); 
         }
     }
 
-    // 3. Khởi tạo hoặc cập nhật Chart.js
     if (weightChartInstance) weightChartInstance.destroy();
 
     weightChartInstance = new Chart(ctx.getContext('2d'), {
@@ -578,21 +579,21 @@ function updateWeightChart() {
             labels: labels,
             datasets: [
                 {
-                    label: 'Mục tiêu (Lý thuyết)',
+                    label: 'Mục tiêu',
                     data: targetData,
-                    borderColor: '#94a3b8', // Màu xám
+                    borderColor: '#94a3b8',
                     borderDash: [5, 5],
                     fill: false,
                     tension: 0.1
                 },
                 {
-                    label: 'Thực tế (Dựa trên ăn uống)',
+                    label: 'Thực tế',
                     data: actualData,
-                    borderColor: '#22c55e', // Màu xanh lá
+                    borderColor: '#22c55e',
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
                     fill: true,
                     tension: 0.3,
-                    spanGaps: true // Nối các điểm kể cả khi có ngày trống
+                    spanGaps: true 
                 }
             ]
         },
@@ -611,19 +612,19 @@ function updateWeightChart() {
         }
     });
 }
+
+// ==========================================
 // 8. RESET DỮ LIỆU CÁ NHÂN
 // ==========================================
 function resetAllData() {
-    // 1. Hiển thị hộp thoại cảnh báo (Xác nhận 2 lớp để tránh bấm nhầm)
     const confirmReset = confirm("CẢNH BÁO: Bạn có chắc chắn muốn xoá TOÀN BỘ dữ liệu không?\n\nHành động này sẽ xoá sạch hồ sơ, mục tiêu và toàn bộ lịch sử ghi chép. KHÔNG THỂ HOÀN TÁC!");
     
     if (confirmReset) {
-        // 2. Xoá toàn bộ các "hộp" lưu trữ của app trong LocalStorage
         localStorage.removeItem('myFitnessProfile');
         localStorage.removeItem('myFitnessHistory');
         localStorage.removeItem('myWeightGoal');
+        localStorage.removeItem('myBasicInfo'); // Xoá thêm biến này
 
-        // 3. Reset các biến toàn cục về số 0
         dailyData = { breakfast: [], lunch: [], snack: [], dinner: [] };
         targetMacros = { protein: 0, fat: 0, carb: 0 }; 
         dailyTargetCal = 0; 
@@ -632,11 +633,11 @@ function resetAllData() {
         totalWaterMl = 0;
         weightGoal = { targetWeight: 0, startDate: '', endDate: '', weightPerWeek: 0 };
 
-        // 4. Thông báo và Tải lại trang web (Reload) để làm trắng toàn bộ giao diện
         alert("Đã dọn dẹp sạch sẽ toàn bộ dữ liệu! Ứng dụng sẽ tự động tải lại.");
-        location.reload(); // F5 lại trang bằng code
+        location.reload(); 
     }
 }
+
 // ==========================================
 // 9. CHỨC NĂNG ZOOM BIỂU ĐỒ
 // ==========================================
@@ -644,16 +645,90 @@ function zoomChart(level) {
     const wrapper = document.getElementById('chart-wrapper');
     const scrollBox = document.getElementById('chart-scroll-box');
     
-    // 1. Phóng to độ rộng của khung chứa (1x = 100%, 2x = 200%, 3x = 300%)
     wrapper.style.width = (level * 100) + '%';
     
-    // 2. Ép Chart.js vẽ lại theo kích thước mới
     if (weightChartInstance) {
         weightChartInstance.resize();
     }
 
-    // 3. Tự động cuộn mượt mà sang bên phải (để hiển thị những ngày gần nhất)
     setTimeout(() => {
         scrollBox.scrollLeft = scrollBox.scrollWidth;
-    }, 300); // Chờ 300ms cho CSS bung kích thước xong mới cuộn
+    }, 300); 
+}
+// ==========================================
+// 10. CHECK-IN CÂN NẶNG HÀNG TUẦN
+// ==========================================
+function updateWeeklyWeight() {
+    const newWeight = parseFloat(document.getElementById('weekly-weight-input').value);
+    
+    if (!newWeight || newWeight <= 0) {
+        alert("Vui lòng nhập số cân nặng hợp lệ!");
+        return;
+    }
+
+    // 1. Ghi đè số cân mới vào ô cân nặng gốc trong hồ sơ
+    const mainWeightInput = document.getElementById('user-weight');
+    if (mainWeightInput) {
+        mainWeightInput.value = newWeight;
+    }
+
+    // 2. Lưu lại ngày check-in để đếm 7 ngày cho tuần sau
+    let todayDate = new Date().toISOString().split('T')[0];
+    localStorage.setItem('lastWeighInDate', todayDate);
+
+    // 3. Gọi hàm calculateTargets() để tính lại Calo
+    calculateTargets();
+
+    // ==========================================
+    // 3.5 LƯU LỊCH SỬ ĐỂ VẼ BIỂU ĐỒ
+    // ==========================================
+    let weightHistory = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
+    
+    weightHistory.push({
+        date: todayDate,
+        weight: newWeight
+    });
+    
+    localStorage.setItem('myWeightHistory', JSON.stringify(weightHistory));
+
+    // ĐÃ SỬA THÀNH ĐÚNG TÊN HÀM TRONG CODE CỦA BẠN:
+    if (typeof updateWeightChart === "function") {
+        updateWeightChart(); 
+    }
+    // ==========================================
+
+    // 4. Xoá ô nhập và ẩn cảnh báo nhắc nhở
+    document.getElementById('weekly-weight-input').value = '';
+    const msgEl = document.getElementById('weight-reminder-msg');
+    if (msgEl) msgEl.classList.add('hidden');
+
+    alert(`Tuyệt vời! Đã cập nhật cân nặng thành ${newWeight}kg.\n\nHệ thống đã tự động tính lại Calo và cập nhật biểu đồ!`);
+}
+
+function checkWeightReminder() {
+    // Đã xoá dòng bị lỗi tự động set lại ngày hôm nay
+    const savedDateStr = localStorage.getItem('lastWeighInDate');
+    
+    // Đọc ngày lưu, nếu chưa có thì gán ngày hôm nay
+    let lastDateObj;
+    if (savedDateStr) {
+        lastDateObj = new Date(savedDateStr);
+    } else {
+        lastDateObj = new Date();
+        localStorage.setItem('lastWeighInDate', lastDateObj.toISOString().split('T')[0]);
+    }
+
+    // Tính khoảng cách ngày
+    const today = new Date();
+    const diffTime = Math.abs(today - lastDateObj);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Nếu qua 7 ngày thì hiện thông báo nhắc
+    if (diffDays >= 7) {
+        const msgEl = document.getElementById('weight-reminder-msg');
+        if (msgEl) {
+            msgEl.innerText = `Đã ${diffDays} ngày kể từ lần cuối bạn cập nhật cân nặng. Cân lại để app chỉnh Calo cho chuẩn nhé!`;
+            msgEl.classList.remove('hidden');
+        }
+    }
 }
