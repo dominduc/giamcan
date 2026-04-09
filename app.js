@@ -237,7 +237,7 @@ function calculateTargets() {
 
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === 'male') ? 5 : -161;
-    let tdee = bmr * 1.45;
+    let tdee = bmr * 1.39;
 
     // TÍNH TOÁN THAY ĐỔI CALO TĂNG/GIẢM CÂN DỰA TRÊN LỘ TRÌNH
     let dailyCalAdjustment = 0; 
