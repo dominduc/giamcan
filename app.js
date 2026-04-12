@@ -239,7 +239,7 @@ function calculateTargets() {
     bmr += (gender === 'male') ? 5 : -161;
     
     // Gán vào biến toàn cục mới tạo
-    baseTDEE = bmr * 1.39; 
+    baseTDEE = bmr * 1.28; 
 
     let dailyCalAdjustment = 0; 
     if (weightGoal && weightGoal.targetWeight > 0 && weightGoal.startDate && weightGoal.endDate) {
