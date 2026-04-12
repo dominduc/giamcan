@@ -7,45 +7,44 @@
 }
 
 body {
-    background-color: #f4f4f9; /* Màu nền xám nhạt ngoài lề */
+    background-color: #f8fafc; /* Nền đồng bộ với màu bạn muốn */
     display: flex;
     justify-content: center;
-    height: 100vh; /* Cao bằng 100% màn hình */
+    height: 100vh;
+    overflow: hidden; /* Khóa cuộn ở ngoài cùng màn hình */
 }
 
-/* Khung app (Mô phỏng màn hình điện thoại) */
+/* Khung app */
 #app-container {
     width: 100%;
-    max-width: 420px; /* Độ rộng chuẩn của smartphone */
+    max-width: 420px; 
     background-color: #ffffff;
     height: 100vh;
-    position: relative;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Xếp dọc từ trên xuống dưới */
+    overflow: hidden; /* Cắt những phần tử bị tràn ra khỏi 420px */
 }
 
 /* Vùng chứa nội dung trang */
 .page {
-    flex: 1;
+    flex: 1; /* Tự động phình to để đẩy thanh menu xuống đáy */
     padding: 20px;
-    overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
-    padding-bottom: 70px; /* Chừa chỗ cho thanh menu để không bị che chữ */
+    overflow-y: auto; /* Bật thanh cuộn riêng cho phần thân nội dung */
+    scroll-behavior: smooth;
 }
-
-/* Các class dùng để ẩn/hiện bằng JavaScript */
-.hidden { display: none; }
-.active { display: block; }
 
 /* Thanh menu dưới đáy */
 #bottom-nav {
-    position: absolute;
-    bottom: 0;
     width: 100%;
-    height: 60px;
+    height: 65px;
     background-color: #ffffff;
     display: flex;
-    border-top: 1px solid #eeeeee;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0; /* Quan trọng: Ngăn không cho menu bị ép dẹp lại khi nội dung dài */
+    z-index: 100;
 }
 
 /* Các nút bấm trong menu */
