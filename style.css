@@ -7,23 +7,24 @@
 }
 
 body {
-    background-color: #f8fafc; /* Nền đồng bộ với màu bạn muốn */
+    background-color: #f8fafc; 
     display: flex;
     justify-content: center;
-    height: 100vh;
-    overflow: hidden; /* Khóa cuộn ở ngoài cùng màn hình */
+    /* Đổi 100vh thành 100dvh */
+    height: 100dvh; 
+    overflow: hidden; 
 }
 
-/* Khung app */
 #app-container {
     width: 100%;
     max-width: 420px; 
     background-color: #ffffff;
-    height: 100vh;
+    /* Đổi 100vh thành 100% để nó ăn theo body */
+    height: 100%; 
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     display: flex;
-    flex-direction: column; /* Xếp dọc từ trên xuống dưới */
-    overflow: hidden; /* Cắt những phần tử bị tràn ra khỏi 420px */
+    flex-direction: column; 
+    overflow: hidden; 
 }
 
 /* Vùng chứa nội dung trang */
@@ -36,10 +37,11 @@ body {
 }
 
 #top-nav {
-    flex-shrink: 0; /* Giữ nguyên dòng này để menu không bị bóp méo */
+    flex-shrink: 0; 
     z-index: 100;
+    /* Thêm dòng này để né camera nốt ruồi trên Poco/iPhone */
+    padding-top: env(safe-area-inset-top); 
 }
-
 /* Các nút bấm trong menu */
 .nav-btn {
     flex: 1;
