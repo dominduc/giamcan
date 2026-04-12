@@ -11,7 +11,11 @@
 </head>
 <body>
     <div id="app-container">
-        
+<nav id="top-nav" class="w-full bg-white border-b border-gray-200 flex justify-around shadow-sm z-50">
+    <button class="nav-btn active-btn py-3" onclick="switchPage('home-page', this)">Trang chủ</button>
+    <button class="nav-btn py-3" onclick="switchPage('nutrition-page', this)">Dinh dưỡng</button>
+    <button class="nav-btn py-3" onclick="switchPage('personal-page', this)">Cá nhân</button>
+</nav>
         <div id="home-page" class="page active">
             <div class="date-header">
                 <button class="date-btn" onclick="changeDate(-1)">&#9664;</button>
@@ -316,11 +320,7 @@
             </div>
         </div>
 
-<nav id="bottom-nav" class="w-full bg-white border-t border-gray-200 flex justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-    <button class="nav-btn active-btn" onclick="switchPage('home-page', this)">Trang chủ</button>
-    <button class="nav-btn" onclick="switchPage('nutrition-page', this)">Dinh dưỡng</button>
-    <button class="nav-btn" onclick="switchPage('personal-page', this)">Cá nhân</button>
-</nav>
+
     </div>
 
     <script src="database.js"></script>

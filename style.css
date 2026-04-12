@@ -32,19 +32,11 @@ body {
     padding: 20px;
     overflow-y: auto; 
     scroll-behavior: smooth;
-    padding-bottom: 70px; /* Bổ sung dòng này để chừa chỗ cho menu */
+
 }
 
-/* Thanh menu dưới đáy */
-#bottom-nav {
-    width: 100%;
-    height: 65px;
-    background-color: #ffffff;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    border-top: 1px solid #e2e8f0;
-    flex-shrink: 0; /* Quan trọng: Ngăn không cho menu bị ép dẹp lại khi nội dung dài */
+#top-nav {
+    flex-shrink: 0; /* Giữ nguyên dòng này để menu không bị bóp méo */
     z-index: 100;
 }
 
