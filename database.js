@@ -36,5 +36,12 @@ const foodDatabase = [
 
     // --- CÁC MÓN BỔ SUNG MỚI ---
     { id: 'f26', name: 'Cơm trắng (1 phần ~ 2 nắm tay)', calPer100g: 390, protein: 8.1, fat: 0.9, carb: 84, fiber: 1.2, vitC: 0, omega3: 0, cholesterol: 0 },
-    { id: 'f27', name: 'Bánh Chocopie (1 cái)', calPer100g: 140, protein: 1.5, fat: 6, carb: 21, fiber: 0.5, vitC: 0, omega3: 0, cholesterol: 0 }
+    { id: 'f27', name: 'Bánh Chocopie (1 cái)', calPer100g: 140, protein: 1.5, fat: 6, carb: 21, fiber: 0.5, vitC: 0, omega3: 0, cholesterol: 0 },
+    { id: 'f28', name: 'Bánh mì trứng xúc xích (1 cái)', calPer100g: 520, protein: 18, fat: 22, carb: 55, fiber: 2.5, vitC: 2, omega3: 0.1, cholesterol: 210 },
+    { id: 'f29', name: 'Bánh mì chả bò (1 cái)', calPer100g: 500, protein: 20, fat: 18, carb: 55, fiber: 2, vitC: 2, omega3: 0.1, cholesterol: 60 },
+    { id: 'f30', name: 'Coca-Cola (lon 330ml)', calPer100g: 140, protein: 0, fat: 0, carb: 35, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
+    { id: 'f31', name: 'Pepsi (lon 330ml)', calPer100g: 150, protein: 0, fat: 0, carb: 38, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
+    { id: 'f32', name: '7Up (lon 330ml)', calPer100g: 140, protein: 0, fat: 0, carb: 35, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
+    { id: 'f33', name: 'Sprite (lon 330ml)', calPer100g: 140, protein: 0, fat: 0, carb: 35, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
+    { id: 'f34', name: 'Combo (Lotteria/Jollibee)', calPer100g: 900, protein: 35, fat: 45, carb: 90, fiber: 4, vitC: 2, omega3: 0.2, cholesterol: 120 }
 ];
