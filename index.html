@@ -11,11 +11,7 @@
 </head>
 <body>
     <div id="app-container">
-<nav id="top-nav" class="w-full bg-white border-b border-gray-200 flex justify-around shadow-sm z-50">
-    <button class="nav-btn active-btn py-3" onclick="switchPage('home-page', this)">Trang chủ</button>
-    <button class="nav-btn py-3" onclick="switchPage('nutrition-page', this)">Dinh dưỡng</button>
-    <button class="nav-btn py-3" onclick="switchPage('personal-page', this)">Cá nhân</button>
-</nav>
+
         <div id="home-page" class="page active">
             <div class="date-header">
                 <button class="date-btn" onclick="changeDate(-1)">&#9664;</button>
@@ -319,6 +315,12 @@
                 <button class="btn-success" onclick="saveCustomWater()">Thêm Nước</button>
             </div>
         </div>
+
+        <nav id="bottom-nav" class="w-full bg-white border-b border-gray-200 flex justify-around shadow-sm z-50">
+    <button class="nav-btn active-btn py-3" onclick="switchPage('home-page', this)">Trang chủ</button>
+    <button class="nav-btn py-3" onclick="switchPage('nutrition-page', this)">Dinh dưỡng</button>
+    <button class="nav-btn py-3" onclick="switchPage('personal-page', this)">Cá nhân</button>
+</nav>
 
 
     </div>

@@ -751,3 +751,11 @@ function checkWeightReminder() {
         }
     }
 }
+
+function switchPage(pageId, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-btn'));
+    btn.classList.add('active-btn');
+}
