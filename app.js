@@ -159,8 +159,12 @@ function switchPage(pageId, btnElement) {
     document.getElementById(pageId).classList.add('active');
     btnElement.classList.add('active-btn');
     if (pageId === 'personal-page') {
-        updateWeightChart();
-    }
+    setTimeout(() => {
+        if (typeof updateWeightChart === 'function') updateWeightChart();
+        if (typeof renderHeatmap === 'function') renderHeatmap();
+        if (typeof checkWeightReminder === 'function') checkWeightReminder();
+    }, 50);
+}
 }
 
 // ==========================================
@@ -778,8 +782,9 @@ function loadFromLocalStorage() {
 
     const exCalEl = document.getElementById('exercise-cal');
     if (exCalEl) exCalEl.innerText = `${Math.round(totalExerciseCal)} kcal`;
-    
+
     if (typeof checkWeightReminder === 'function') checkWeightReminder();
+    if (typeof renderHeatmap === 'function') renderHeatmap();
 }
 
 // Biểu đồ cân nặng
