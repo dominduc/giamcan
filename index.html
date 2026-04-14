@@ -91,6 +91,14 @@
                     </div>
                     <button class="add-btn" onclick="openWaterModal()">+</button>
                 </div>
+
+                <div class="log-card custom-food-card">
+                    <div class="log-info">
+                        <h4>📝 Bổ sung món ăn</h4>
+                        <span class="log-calories">Thêm món mới để tính calo nhanh hơn</span>
+                    </div>
+                    <button class="add-btn" onclick="openCustomFoodModal()">+</button>
+                </div>
             </div>
         </div>
 
@@ -305,6 +313,59 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn-success" onclick="saveMeal()">Lưu & Cập nhật</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="custom-food-modal" class="modal hidden">
+            <div class="modal-content custom-food-modal-content">
+                <span class="close-btn" onclick="closeCustomFoodModal()">&times;</span>
+                <h3>Bổ sung món ăn mới</h3>
+                <p class="modal-note">Nhập thông tin theo 100g để app tự tính calo và dinh dưỡng.</p>
+
+                <div class="input-group">
+                    <label>Tên món ăn:</label>
+                    <input type="text" id="custom-food-name" placeholder="Ví dụ: Cacao nguyên chất">
+                </div>
+
+                <div class="custom-food-grid">
+                    <div class="input-group">
+                        <label>Calo / 100g:</label>
+                        <input type="number" id="custom-food-cal" placeholder="45" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Protein:</label>
+                        <input type="number" id="custom-food-protein" placeholder="3.5" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Fat:</label>
+                        <input type="number" id="custom-food-fat" placeholder="1.8" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Carb:</label>
+                        <input type="number" id="custom-food-carb" placeholder="3.2" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Fiber:</label>
+                        <input type="number" id="custom-food-fiber" placeholder="5.4" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Vitamin C:</label>
+                        <input type="number" id="custom-food-vitc" placeholder="0" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Omega-3:</label>
+                        <input type="number" id="custom-food-omega3" placeholder="0" step="0.1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Cholesterol:</label>
+                        <input type="number" id="custom-food-cholesterol" placeholder="0" step="0.1" min="0">
+                    </div>
+                </div>
+
+                <div class="custom-food-actions">
+                    <button class="btn-secondary" onclick="closeCustomFoodModal()">Huỷ</button>
+                    <button class="btn-success" onclick="saveCustomFood()">Lưu món ăn</button>
                 </div>
             </div>
         </div>

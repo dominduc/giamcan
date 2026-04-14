@@ -561,3 +561,63 @@ body {
 
 .heatmap-legend { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 11px; color: #57606a; flex-wrap: wrap; }
 .heatmap-legend .box { width: 14px; height: 14px; border-radius: 3px; margin-left: 3px; }
+
+.log-card.custom-food-card {
+    background-color: #f5f3ff !important;
+    border: 1px solid #ddd6fe !important;
+}
+
+.log-card.custom-food-card .add-btn {
+    background-color: #ede9fe;
+    color: #7c3aed;
+}
+
+.log-card.custom-food-card .add-btn:hover {
+    background-color: #7c3aed;
+    color: white;
+}
+
+.custom-food-modal-content {
+    max-width: 420px;
+    max-height: 85dvh;
+    overflow-y: auto;
+}
+
+.custom-food-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.custom-food-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #374151;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.modal-note {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 8px 0 12px;
+    line-height: 1.4;
+}
+
+@media (max-width: 420px) {
+    .custom-food-grid,
+    .custom-food-actions {
+        grid-template-columns: 1fr;
+    }
+}

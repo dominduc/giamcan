@@ -11,6 +11,8 @@ let totalExerciseCal = 0;
 let totalWaterMl = 0;
 let currentDateString = ''; 
 
+const CUSTOM_FOOD_STORAGE_KEY = 'myCustomFoods';
+
 let weightGoal = {
     targetWeight: 0,
     startDate: '',
@@ -109,14 +111,8 @@ function getDynamicTargetForDate(targetDateStr) {
 // 2. KHỞI TẠO & QUẢN LÝ NGÀY THÁNG
 // ==========================================
 window.onload = function() {
-    // Tải danh sách thức ăn
-    const select = document.getElementById('food-select');
-    foodDatabase.forEach(food => {
-        let option = document.createElement('option');
-        option.value = food.id;
-        option.text = `${food.name} (${food.calPer100g} kcal/100g)`;
-        select.appendChild(option);
-    });
+    loadCustomFoodsIntoDatabase();
+    renderFoodOptions();
 
     // Lấy ngày hôm nay (Chuẩn múi giờ)
     let today = new Date();
@@ -188,6 +184,136 @@ function closeModal() {
         searchInput.value = '';
         filterFood(); // Gọi lại hàm để load lại toàn bộ danh sách món
     }
+}
+
+function getStoredCustomFoods() {
+    try {
+        return JSON.parse(localStorage.getItem(CUSTOM_FOOD_STORAGE_KEY)) || [];
+    } catch (error) {
+        console.error('Không đọc được danh sách món ăn tự tạo:', error);
+        return [];
+    }
+}
+
+function saveStoredCustomFoods(customFoods) {
+    localStorage.setItem(CUSTOM_FOOD_STORAGE_KEY, JSON.stringify(customFoods));
+}
+
+function loadCustomFoodsIntoDatabase() {
+    const customFoods = getStoredCustomFoods();
+
+    customFoods.forEach(food => {
+        const existed = foodDatabase.some(item => item.id === food.id);
+        if (!existed) {
+            foodDatabase.push(food);
+        }
+    });
+}
+
+function renderFoodOptions(searchKeyword = '') {
+    const select = document.getElementById('food-select');
+    if (!select) return;
+
+    const keyword = searchKeyword.trim().toLowerCase();
+    const filteredFoods = foodDatabase.filter(food =>
+        food.name.toLowerCase().includes(keyword)
+    );
+
+    select.innerHTML = '';
+
+    if (filteredFoods.length === 0) {
+        let option = document.createElement('option');
+        option.text = 'Không tìm thấy món này...';
+        option.disabled = true;
+        select.appendChild(option);
+        return;
+    }
+
+    filteredFoods.forEach(food => {
+        let option = document.createElement('option');
+        option.value = food.id;
+        option.text = `${food.name} (${food.calPer100g} kcal/100g)`;
+        select.appendChild(option);
+    });
+}
+
+function openCustomFoodModal() {
+    document.getElementById('custom-food-modal').classList.remove('hidden');
+}
+
+function closeCustomFoodModal() {
+    document.getElementById('custom-food-modal').classList.add('hidden');
+
+    [
+        'custom-food-name',
+        'custom-food-cal',
+        'custom-food-protein',
+        'custom-food-fat',
+        'custom-food-carb',
+        'custom-food-fiber',
+        'custom-food-vitc',
+        'custom-food-omega3',
+        'custom-food-cholesterol'
+    ].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+}
+
+function getCustomFoodFormData() {
+    return {
+        name: document.getElementById('custom-food-name').value.trim(),
+        calPer100g: parseFloat(document.getElementById('custom-food-cal').value),
+        protein: parseFloat(document.getElementById('custom-food-protein').value) || 0,
+        fat: parseFloat(document.getElementById('custom-food-fat').value) || 0,
+        carb: parseFloat(document.getElementById('custom-food-carb').value) || 0,
+        fiber: parseFloat(document.getElementById('custom-food-fiber').value) || 0,
+        vitC: parseFloat(document.getElementById('custom-food-vitc').value) || 0,
+        omega3: parseFloat(document.getElementById('custom-food-omega3').value) || 0,
+        cholesterol: parseFloat(document.getElementById('custom-food-cholesterol').value) || 0
+    };
+}
+
+function saveCustomFood() {
+    const newFood = getCustomFoodFormData();
+
+    if (!newFood.name) {
+        alert('Vui lòng nhập tên món ăn!');
+        return;
+    }
+
+    if (Number.isNaN(newFood.calPer100g) || newFood.calPer100g < 0) {
+        alert('Vui lòng nhập calo/100g hợp lệ!');
+        return;
+    }
+
+    const duplicatedName = foodDatabase.some(food =>
+        food.name.trim().toLowerCase() === newFood.name.toLowerCase()
+    );
+
+    if (duplicatedName) {
+        alert('Món ăn này đã có trong danh sách rồi!');
+        return;
+    }
+
+    newFood.id = `custom_${Date.now()}`;
+
+    const customFoods = getStoredCustomFoods();
+    customFoods.push(newFood);
+    saveStoredCustomFoods(customFoods);
+    foodDatabase.push(newFood);
+
+    const searchInput = document.getElementById('food-search');
+    const currentKeyword = searchInput ? searchInput.value : '';
+    renderFoodOptions(currentKeyword || newFood.name);
+
+    const select = document.getElementById('food-select');
+    if (select) {
+        select.value = newFood.id;
+    }
+
+    closeCustomFoodModal();
+    alert(`Đã thêm món mới: ${newFood.name}`);
 }
 
 function addFoodToMeal() {
@@ -774,6 +900,7 @@ function resetAllData() {
         localStorage.removeItem('myFitnessHistory');
         localStorage.removeItem('myWeightGoal');
         localStorage.removeItem('myBasicInfo'); // Xoá thêm biến này
+        localStorage.removeItem(CUSTOM_FOOD_STORAGE_KEY);
 
         dailyData = { breakfast: [], lunch: [], snack: [], dinner: [] };
         targetMacros = { protein: 0, fat: 0, carb: 0 }; 
@@ -894,32 +1021,8 @@ function switchPage(pageId, btn) {
 // 11. TÌM KIẾM MÓN ĂN
 // ==========================================
 function filterFood() {
-    // Lấy từ khóa người dùng nhập và chuyển thành chữ thường
     const searchKeyword = document.getElementById('food-search').value.toLowerCase();
-    const select = document.getElementById('food-select');
-    
-    // Xóa sạch danh sách thả xuống hiện tại
-    select.innerHTML = '';
-    
-    // Lọc ra những món ăn có tên chứa từ khóa tìm kiếm
-    const filteredFoods = foodDatabase.filter(food => 
-        food.name.toLowerCase().includes(searchKeyword)
-    );
-    
-    // Đổ lại các món đã lọc vào ô chọn (nếu không có món nào thì để trống)
-    if (filteredFoods.length === 0) {
-        let option = document.createElement('option');
-        option.text = "Không tìm thấy món này...";
-        option.disabled = true;
-        select.appendChild(option);
-    } else {
-        filteredFoods.forEach(food => {
-            let option = document.createElement('option');
-            option.value = food.id;
-            option.text = `${food.name} (${food.calPer100g} kcal/100g)`;
-            select.appendChild(option);
-        });
-    }
+    renderFoodOptions(searchKeyword);
 }
 // ==========================================
 // 12. BIỂU ĐỒ HEATMAP (DẠNG LỊCH THÁNG)
