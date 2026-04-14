@@ -43,5 +43,9 @@ const foodDatabase = [
     { id: 'f31', name: 'Pepsi (lon 330ml)', calPer100g: 150, protein: 0, fat: 0, carb: 38, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
     { id: 'f32', name: '7Up (lon 330ml)', calPer100g: 140, protein: 0, fat: 0, carb: 35, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
     { id: 'f33', name: 'Sprite (lon 330ml)', calPer100g: 140, protein: 0, fat: 0, carb: 35, fiber: 0, vitC: 0, omega3: 0, cholesterol: 0 },
-    { id: 'f34', name: 'Combo (Lotteria/Jollibee)', calPer100g: 900, protein: 35, fat: 45, carb: 90, fiber: 4, vitC: 2, omega3: 0.2, cholesterol: 120 }
+    { id: 'f34', name: 'Combo (Lotteria/Jollibee)', calPer100g: 900, protein: 35, fat: 45, carb: 90, fiber: 4, vitC: 2, omega3: 0.2, cholesterol: 120 },
+    { id: 'f35', name: 'Dồi sụn', calPer100g: 160, protein: 7.5, fat: 12.5, carb: 4.5, fiber: 0.5, vitC: 0, omega3: 0.1, cholesterol: 35 },
+    { id: 'f36', name: 'Gà rang (2 miếng nhỏ)', calPer100g: 110, protein: 14, fat: 6, carb: 0.5, fiber: 0, vitC: 1, omega3: 0.1, cholesterol: 45 },
+    { id: 'f37', name: 'Xôi mặn', calPer100g: 680, protein: 22, fat: 28, carb: 85, fiber: 2.5, vitC: 2, omega3: 0.2, cholesterol: 250 },
+    { id: 'f38', name: 'Cacao nguyên chất', calPer100g: 45, protein: 3.5, fat: 1.8, carb: 3.2, fiber: 5.4, vitC: 0, omega3: 0, cholesterol: 0 }
 ];

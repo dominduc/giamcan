@@ -244,6 +244,35 @@
     </div>
     <p class="text-xs text-gray-500 mt-2 italic">*Hệ thống sẽ tự động tính lại Calo và Macro dựa trên số cân mới nhất của bạn.</p>
 </div>
+<div class="heatmap-wrapper">
+    <div class="heatmap-header">
+        <h4>🗓️ Lịch theo dõi (Tháng)</h4>
+        <div class="heatmap-nav">
+            <button onclick="changeHeatmapMonth(-1)">◀ Trước</button>
+            <span id="heatmap-month-label">Tháng hiện tại</span>
+            <button onclick="changeHeatmapMonth(1)">Sau ▶</button>
+        </div>
+    </div>
+    
+    <div class="heatmap-body-horizontal">
+        <div class="heatmap-weekdays">
+            <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
+        </div>
+        <div class="heatmap-grid-horizontal" id="heatmap-grid">
+            </div>
+    </div>
+    
+    <div class="heatmap-legend">
+            <span>Đói/Mệt</span>
+            <div class="box hm-purple"></div>
+            <div class="box hm-perfect"></div>
+            <div class="box hm-good"></div>
+            <div class="box hm-warn"></div>
+            <div class="box hm-orange"></div>
+            <div class="box hm-danger"></div>
+            <span style="margin-left: 5px;">Lố nhiều</span>
+        </div>
+</div>
 <div class="mt-8 border-t border-gray-200 pt-6 mb-8 flex flex-col items-center">
         <button onclick="resetAllData()" class="bg-white border border-red-500 text-red-500 px-4 py-2 rounded-md text-sm font-bold hover:bg-red-50 transition flex items-center shadow-sm">
             <span class="mr-2">⚠️</span> Xoá Toàn Bộ Dữ Liệu
@@ -256,9 +285,11 @@
 </div>
 
         <div id="food-modal" class="modal hidden">
+            
             <div class="modal-content">
                 <span class="close-btn" onclick="closeModal()">&times;</span>
                 <h3 id="modal-title">Thêm món ăn</h3>
+                <input type="text" id="food-search" placeholder="🔍 Nhập tên món ăn để tìm..." onkeyup="filterFood()" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 <div class="input-group">
                     <label>Chọn món ăn (100g chuẩn):</label>
                     <select id="food-select"></select>

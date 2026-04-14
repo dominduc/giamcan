@@ -489,3 +489,75 @@ body {
 .nav-btn:hover {
     color: #4CAF50;
 }
+/* ==========================================
+   BIỂU ĐỒ HEATMAP DẠNG LỊCH THÁNG
+========================================== */
+.heatmap-wrapper {
+    margin-top: 20px; background: #fff; padding: 20px;
+    border-radius: 12px; border: 1px solid #e1e4e8;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto;
+}
+.heatmap-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.heatmap-header h4 { margin: 0; font-size: 16px; color: #333; }
+.heatmap-nav {
+    display: flex; align-items: center; gap: 10px;
+    background: #f6f8fa; padding: 4px 8px; border-radius: 6px; border: 1px solid #d0d7de;
+}
+.heatmap-nav button {
+    background: none; border: none; font-size: 13px; cursor: pointer;
+    padding: 4px 8px; color: #24292f; border-radius: 4px;
+}
+.heatmap-nav button:hover { background: #eaeaec; }
+.heatmap-nav span { font-size: 14px; font-weight: 600; color: #24292f; min-width: 80px; text-align: center; }
+
+/* Khung bọc lịch */
+.heatmap-body-horizontal {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 15px;
+}
+.heatmap-weekdays {
+    display: grid; grid-template-columns: repeat(7, 34px); gap: 6px;
+    text-align: center; font-size: 13px; font-weight: bold; color: #57606a;
+}
+.heatmap-grid-horizontal {
+    display: grid; grid-template-columns: repeat(7, 34px); gap: 6px;
+}
+
+/* Từng ô vuông (từng ngày) */
+.heatmap-box-horiz {
+    width: 34px; height: 34px; border-radius: 6px;
+    background-color: #ebedf0; position: relative; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff; transition: transform 0.1s;
+}
+.heatmap-box-horiz.hm-empty { color: #8c959f; } /* Màu chữ ngày chưa tới */
+.heatmap-box-horiz:hover { transform: scale(1.1); z-index: 2; }
+
+/* Tooltip (Bảng nhỏ khi di chuột) */
+.heatmap-box-horiz:hover::after {
+    content: attr(data-info); position: absolute; bottom: 115%; left: 50%;
+    transform: translateX(-50%); background: #24292f; color: #fff;
+    padding: 6px 10px; font-size: 12px; border-radius: 6px;
+    white-space: nowrap; z-index: 10; pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.heatmap-box-horiz:hover::before {
+    content: ""; position: absolute; bottom: 95%; left: 50%;
+    transform: translateX(-50%); border-width: 5px; border-style: solid;
+    border-color: #24292f transparent transparent transparent; z-index: 10; pointer-events: none;
+}
+
+
+/* Các mức độ màu sắc */
+.hm-empty { background-color: #ebedf0; } 
+.hm-purple { background-color: #9b59b6; } /* Tím: Suy nhược, thiếu calo */
+.hm-perfect { background-color: #216e39; } /* Xanh đậm: Thâm hụt rất tốt */
+.hm-good { background-color: #40c463; } /* Xanh nhạt: Đạt mục tiêu (dao động 50 calo) */
+.hm-warn { background-color: #f1c40f; } /* Vàng: Lố nhẹ */
+.hm-orange { background-color: #e67e22; } /* Cam: Lố vừa */
+.hm-danger { background-color: #e74a3b; } /* Đỏ: Lố nặng */
+
+.heatmap-legend { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 11px; color: #57606a; flex-wrap: wrap; }
+.heatmap-legend .box { width: 14px; height: 14px; border-radius: 3px; margin-left: 3px; }
