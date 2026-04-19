@@ -21,91 +21,30 @@ let weightGoal = {
 };
 let weightChartInstance = null;
 let macroChartInstance = null;
-// ==========================================
-// HÀM CỖ MÁY THỜI GIAN: Tính calo mục tiêu (Bản Hoàn Chỉnh: Checkpoint + Theo Tuần)
-// ==========================================
-function getDynamicTargetForDate(targetDateStr) {
-    const savedBasic = JSON.parse(localStorage.getItem('myBasicInfo') || '{}');
-    const gender = savedBasic.gender || 'male';
-    const age = parseFloat(savedBasic.age) || 25;
-    const height = parseFloat(savedBasic.height) || 170;
-    const currentW = parseFloat(savedBasic.weight) || 70;
-
-    const wg = JSON.parse(localStorage.getItem('myWeightGoal'));
-    
-    // Nếu chưa có lộ trình, trả về TDEE giữ cân hiện tại
-    if (!wg || !wg.startDate || !wg.endDate) {
-        let bmr = (10 * currentW) + (6.25 * height) - (5 * age);
-        bmr += (gender === 'male') ? 5 : -161;
-        return bmr * 1.28; 
-    }
-
-    let tDate = new Date(targetDateStr); tDate.setHours(0,0,0,0);
-    let sDate = new Date(wg.startDate); sDate.setHours(0,0,0,0);
-    let eDate = new Date(wg.endDate); eDate.setHours(0,0,0,0);
-
-    // 1. Lấy mốc 90kg ban đầu và các lần cập nhật thực tế (Ví dụ 87kg) tạo thành Điểm Neo
-    let weightHistoryArray = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
-    let updates = [ { date: wg.startDate, weight: wg.startWeight || currentW } ];
-    weightHistoryArray.forEach(item => {
-        updates.push({ date: item.date, weight: parseFloat(item.weight) });
-    });
-    updates.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // 2. Tìm điểm neo gần nhất với ngày đang xem
-    let activeCp = updates[0];
-    for (let i = 0; i < updates.length; i++) {
-        let uDate = new Date(updates[i].date); uDate.setHours(0,0,0,0);
-        if (uDate <= tDate) activeCp = updates[i];
-    }
-    if (tDate < sDate) activeCp = updates[0];
-
-    // 3. Tính toán lộ trình từ điểm neo đó tới đích
-    let cpDate = new Date(activeCp.date); cpDate.setHours(0,0,0,0);
-    let daysFromCpToEnd = Math.ceil((eDate - cpDate) / (1000 * 60 * 60 * 24));
-    if (daysFromCpToEnd <= 0) daysFromCpToEnd = 1;
-
-    let weightDiffFromCp = wg.targetWeight - activeCp.weight;
-    let dailyWeightChange = weightDiffFromCp / daysFromCpToEnd;
-
-    let daysSinceCp = Math.ceil((tDate - cpDate) / (1000 * 60 * 60 * 24));
-    if (daysSinceCp < 0) daysSinceCp = 0;
-    if (tDate > eDate) daysSinceCp = daysFromCpToEnd;
-
-    // =======================================================
-    // LOGIC ĐÓNG BĂNG THEO TUẦN (MỚI THÊM VÀO)
-    // Thay vì dùng ngày lẻ, ta gộp lại thành từng chặng 7 ngày
-    // =======================================================
-    let weeksSinceCp = Math.floor(daysSinceCp / 7);
-    let effectiveDaysSinceCp = weeksSinceCp * 7; 
-
-    // Cân nặng lý thuyết ĐƯỢC CHỐT theo tuần
-    let theoreticalWeight = activeCp.weight + (dailyWeightChange * effectiveDaysSinceCp);
-
-    // Ngày đại diện cho cả tuần đó (để tính thâm hụt)
-    let effectiveDate = new Date(cpDate);
-    effectiveDate.setDate(effectiveDate.getDate() + effectiveDaysSinceCp);
-
-    // Tính TDEE cho mức cân nặng của tuần này
-    let bmr = (10 * theoreticalWeight) + (6.25 * height) - (5 * age);
-    bmr += (gender === 'male') ? 5 : -161;
-    let dynamicTDEE = bmr * 1.28;
-
-    // Tính Thâm hụt Calo cần thiết (Dựa trên số ngày còn lại tính từ ngày đầu tuần)
-    let remainingDays = Math.ceil((eDate - effectiveDate) / (1000 * 60 * 60 * 24));
-    let calAdjustment = 0;
-    if (remainingDays > 0) {
-        calAdjustment = ((wg.targetWeight - theoreticalWeight) * 7700) / remainingDays;
-    }
-
-    let finalCal = dynamicTDEE + calAdjustment;
-    
-    // Giới hạn an toàn
-    if (gender === 'male' && finalCal < 1500 && calAdjustment < 0) finalCal = 1500;
-    if (gender === 'female' && finalCal < 1200 && calAdjustment < 0) finalCal = 1200;
-
-    return Math.round(finalCal);
+function getTodayLocalDateString() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().split('T')[0];
 }
+
+function upsertWeightHistoryEntry(dateStr, weight) {
+    let weightHistory = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
+    const numericWeight = parseFloat(weight);
+
+    if (!dateStr || !numericWeight || numericWeight <= 0) return weightHistory;
+
+    const existingIndex = weightHistory.findIndex(item => item.date === dateStr);
+    if (existingIndex >= 0) {
+        weightHistory[existingIndex].weight = numericWeight;
+    } else {
+        weightHistory.push({ date: dateStr, weight: numericWeight });
+    }
+
+    weightHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+    localStorage.setItem('myWeightHistory', JSON.stringify(weightHistory));
+    return weightHistory;
+}
+
 
 // ==========================================   
 // 2. KHỞI TẠO & QUẢN LÝ NGÀY THÁNG
@@ -144,27 +83,37 @@ function selectDate(newDate) {
 // 3. CHUYỂN TRANG
 // ==========================================
 function switchPage(pageId, btnElement) {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => {
+    // Ẩn tất cả trang
+    document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
         page.classList.add('hidden');
     });
 
-    const btns = document.querySelectorAll('.nav-btn');
-    btns.forEach(btn => {
+    // Bỏ active ở tất cả nút
+    document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active-btn');
     });
 
-    document.getElementById(pageId).classList.remove('hidden');
-    document.getElementById(pageId).classList.add('active');
-    btnElement.classList.add('active-btn');
+    // Hiện trang được chọn
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.remove('hidden');
+        targetPage.classList.add('active');
+    }
+
+    // Tô active cho nút được bấm
+    if (btnElement) {
+        btnElement.classList.add('active-btn');
+    }
+
+    // Nếu vào trang cá nhân thì refresh các phần liên quan
     if (pageId === 'personal-page') {
-    setTimeout(() => {
-        if (typeof updateWeightChart === 'function') updateWeightChart();
-        if (typeof renderHeatmap === 'function') renderHeatmap();
-        if (typeof checkWeightReminder === 'function') checkWeightReminder();
-    }, 50);
-}
+        setTimeout(() => {
+            if (typeof updateWeightChart === 'function') updateWeightChart();
+            if (typeof renderHeatmap === 'function') renderHeatmap();
+            if (typeof checkWeightReminder === 'function') checkWeightReminder();
+        }, 50);
+    }
 }
 
 // ==========================================
@@ -447,7 +396,7 @@ function updateWaterDisplay() {
 // ==========================================
 // 6. TÍNH TOÁN MỤC TIÊU & DINH DƯỠNG
 // ==========================================
-function calculateTargets() {
+function calculateTargets(showAlert = true) {
     const weight = parseFloat(document.getElementById('user-weight').value);
     const gender = document.getElementById('user-gender').value;
     const age = parseFloat(document.getElementById('user-age').value);
@@ -456,8 +405,13 @@ function calculateTargets() {
     if (!age || !height || !weight) return;
     localStorage.setItem('myBasicInfo', JSON.stringify({ gender, age, height, weight }));
 
-    // NẾU ĐANG TRONG LỘ TRÌNH -> GHI NHẬN CẬP NHẬT CÂN NẶNG VÀO NHẬT KÝ
-    let todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayLocalDateString();
+
+    // Nếu đang có lộ trình thì lưu cân nặng vào lịch sử TRƯỚC khi tính calo
+    if (weightGoal && weightGoal.startDate && weightGoal.endDate) {
+        upsertWeightHistoryEntry(todayStr, weight);
+    }
+
     if (weightGoal && weightGoal.checkpoints) {
         let existing = weightGoal.checkpoints.find(c => c.date === todayStr);
         if (existing) existing.weight = weight;
@@ -467,23 +421,32 @@ function calculateTargets() {
         localStorage.setItem('myWeightGoal', JSON.stringify(weightGoal));
     }
 
-    // Load lại giao diện cho ngày hôm nay bằng cỗ máy thời gian
     dailyTargetCal = getDynamicTargetForDate(currentDateString);
     dailyTargetWater = weight * 35;
     targetMacros.protein = Math.round((dailyTargetCal * 0.3) / 4);
     targetMacros.fat = Math.round((dailyTargetCal * 0.3) / 9);
     targetMacros.carb = Math.round((dailyTargetCal * 0.4) / 4);
 
-    if(document.getElementById('target-protein-text')) document.getElementById('target-protein-text').innerText = `/ ${targetMacros.protein}g`;
-    if(document.getElementById('target-fat-text')) document.getElementById('target-fat-text').innerText = `/ ${targetMacros.fat}g`;
-    if(document.getElementById('target-carb-text')) document.getElementById('target-carb-text').innerText = `/ ${targetMacros.carb}g`;
-    if(document.getElementById('target-cal-display')) document.getElementById('target-cal-display').innerText = `${Math.round(dailyTargetCal)} kcal`;
+    if (document.getElementById('target-protein-text')) {
+        document.getElementById('target-protein-text').innerText = `/ ${targetMacros.protein}g`;
+    }
+    if (document.getElementById('target-fat-text')) {
+        document.getElementById('target-fat-text').innerText = `/ ${targetMacros.fat}g`;
+    }
+    if (document.getElementById('target-carb-text')) {
+        document.getElementById('target-carb-text').innerText = `/ ${targetMacros.carb}g`;
+    }
+    if (document.getElementById('target-cal-display')) {
+        document.getElementById('target-cal-display').innerText = `${Math.round(dailyTargetCal)} kcal`;
+    }
     
-    if(typeof updateNutrition === 'function') updateNutrition(); 
-    if(typeof updateTotalCalories === 'function') updateTotalCalories();
-    if(typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof updateNutrition === 'function') updateNutrition(); 
+    if (typeof updateTotalCalories === 'function') updateTotalCalories();
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
     
-    alert(`Đã cập nhật mục tiêu mới!\nMục tiêu của ngày ${currentDateString} là: ${Math.round(dailyTargetCal)} kcal.`);
+    if (showAlert) {
+        alert(`Đã cập nhật mục tiêu mới!\nMục tiêu của ngày ${currentDateString} là: ${Math.round(dailyTargetCal)} kcal.`);
+    }
 }
 
 function saveWeightGoal() {
@@ -787,112 +750,6 @@ function loadFromLocalStorage() {
     if (typeof renderHeatmap === 'function') renderHeatmap();
 }
 
-// Biểu đồ cân nặng
-function updateWeightChart() {
-    const ctx = document.getElementById('weightChart');
-    if (!ctx || !weightGoal.startDate || !weightGoal.endDate) return;
-
-    let labels = [];
-    let targetData = [];
-    let actualData = [];
-
-    let start = new Date(weightGoal.startDate);
-    let end = new Date(weightGoal.endDate);
-    
-    // Đã fix cứng: Mốc vẽ biểu đồ mục tiêu LUÔN LÀ CÂN NẶNG BAN ĐẦU (90kg)
-    let startWeight = weightGoal.startWeight || parseFloat(document.getElementById('user-weight').value) || 0;
-    let targetWeight = weightGoal.targetWeight;
-
-    let totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    if (totalDays <= 0) return;
-
-    let weightChangePerDay = (targetWeight - startWeight) / totalDays;
-
-    let weightHistoryArray = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
-    let weightHistoryMap = {};
-    weightHistoryArray.forEach(item => {
-        weightHistoryMap[item.date] = item.weight;
-    });
-
-    let currentBaseTDEE = baseTDEE > 0 ? baseTDEE : 2000; 
-    let runningActualWeight = startWeight;
-
-    for (let i = 0; i <= totalDays; i++) {
-        let d = new Date(start);
-        d.setDate(d.getDate() + i);
-        let dateStr = d.toISOString().split('T')[0];
-
-        labels.push(i % 7 === 0 ? `Tuần ${i/7}` : dateStr.split('-').slice(1).join('/'));
-
-        // Đường mục tiêu vẽ tuyến tính (Không bao giờ thay đổi quá khứ)
-        targetData.push((startWeight + (i * weightChangePerDay)).toFixed(2));
-
-        let allHistory = JSON.parse(localStorage.getItem('myFitnessHistory')) || {};
-        
-        if (weightHistoryMap[dateStr]) {
-            // Khi có cập nhật thực tế (Ví dụ 88kg), ép biểu đồ rớt xuống 88kg
-            runningActualWeight = parseFloat(weightHistoryMap[dateStr]);
-            actualData.push(runningActualWeight.toFixed(2));
-        } else if (allHistory[dateStr]) {
-            let dayData = allHistory[dateStr];
-            let foodCal = 0;
-            for (let meal in dayData.dailyData) {
-                foodCal += dayData.dailyData[meal].reduce((sum, item) => sum + item.calories, 0);
-            }
-            
-            let netCal = foodCal - (currentBaseTDEE + dayData.totalExerciseCal);
-            let weightChange = netCal / 7700; 
-            
-            runningActualWeight += weightChange;
-            actualData.push(runningActualWeight.toFixed(2));
-        } else {
-            actualData.push(i === 0 ? startWeight : null); 
-        }
-    }
-
-    if (typeof weightChartInstance !== 'undefined' && weightChartInstance) {
-        weightChartInstance.destroy();
-    }
-
-    weightChartInstance = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Mục tiêu (Khởi điểm)',
-                    data: targetData,
-                    borderColor: '#94a3b8',
-                    borderDash: [5, 5],
-                    fill: false,
-                    tension: 0.1
-                },
-                {
-                    label: 'Thực tế',
-                    data: actualData,
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    spanGaps: true 
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { 
-                    beginAtZero: false,
-                    title: { display: true, text: 'Cân nặng (kg)' }
-                }
-            },
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-}
 
 // ==========================================
 // 8. RESET DỮ LIỆU CÁ NHÂN
@@ -948,43 +805,31 @@ function updateWeeklyWeight() {
         return;
     }
 
-    // 1. Ghi đè số cân mới vào ô cân nặng gốc trong hồ sơ
+    // Ghi đè số cân mới vào ô cân nặng hồ sơ
     const mainWeightInput = document.getElementById('user-weight');
     if (mainWeightInput) {
         mainWeightInput.value = newWeight;
     }
 
-    // 2. Lưu lại ngày check-in để đếm 7 ngày cho tuần sau
-    let todayDate = new Date().toISOString().split('T')[0];
+    // Lưu ngày check-in
+    const todayDate = getTodayLocalDateString();
     localStorage.setItem('lastWeighInDate', todayDate);
 
-    // 3. Gọi hàm calculateTargets() để tính lại Calo
-    calculateTargets();
+    // Lưu lịch sử cân nặng TRƯỚC
+    upsertWeightHistoryEntry(todayDate, newWeight);
 
-    // ==========================================
-    // 3.5 LƯU LỊCH SỬ ĐỂ VẼ BIỂU ĐỒ
-    // ==========================================
-    let weightHistory = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
-    
-    weightHistory.push({
-        date: todayDate,
-        weight: newWeight
-    });
-    
-    localStorage.setItem('myWeightHistory', JSON.stringify(weightHistory));
+    // Rồi mới tính lại calo/macro
+    calculateTargets(false);
 
-    // ĐÃ SỬA THÀNH ĐÚNG TÊN HÀM TRONG CODE CỦA BẠN:
     if (typeof updateWeightChart === "function") {
         updateWeightChart(); 
     }
-    // ==========================================
 
-    // 4. Xoá ô nhập và ẩn cảnh báo nhắc nhở
     document.getElementById('weekly-weight-input').value = '';
     const msgEl = document.getElementById('weight-reminder-msg');
     if (msgEl) msgEl.classList.add('hidden');
 
-    alert(`Tuyệt vời! Đã cập nhật cân nặng thành ${newWeight}kg.\n\nHệ thống đã tự động tính lại Calo và cập nhật biểu đồ!`);
+    alert(`Tuyệt vời! Đã cập nhật cân nặng thành ${newWeight}kg.\n\nHệ thống đã lưu cân mới trước khi tính lại Calo, Macro và biểu đồ.`);
 }
 
 function checkWeightReminder() {
@@ -1015,13 +860,6 @@ function checkWeightReminder() {
     }
 }
 
-function switchPage(pageId, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.getElementById(pageId).classList.remove('hidden');
-
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-btn'));
-    btn.classList.add('active-btn');
-}
 // ==========================================
 // 11. TÌM KIẾM MÓN ĂN
 // ==========================================
