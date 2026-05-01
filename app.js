@@ -27,6 +27,57 @@ function getTodayLocalDateString() {
     return today.toISOString().split('T')[0];
 }
 
+// ==========================================
+// CẤU HÌNH LOW-CARB
+// ==========================================
+const LOW_CARB_MAX_CARB_G = 50;       // Giới hạn carb/ngày
+const LOW_CARB_PROTEIN_PER_KG = 1.6;  // Protein mục tiêu: 1.6g/kg cân nặng
+
+function getCurrentWeightForMacro() {
+    const weightInput = document.getElementById('user-weight');
+    const weightFromInput = weightInput ? parseFloat(weightInput.value) : 0;
+    if (weightFromInput && weightFromInput > 0) return weightFromInput;
+
+    try {
+        const savedBasic = JSON.parse(localStorage.getItem('myBasicInfo') || '{}');
+        const weightFromStorage = parseFloat(savedBasic.weight);
+        if (weightFromStorage && weightFromStorage > 0) return weightFromStorage;
+    } catch (error) {
+        console.error('Không đọc được cân nặng để tính macro:', error);
+    }
+
+    if (weightGoal && weightGoal.startWeight) return parseFloat(weightGoal.startWeight);
+    return 70;
+}
+
+function updateMacroTargetTexts() {
+    const proText = document.getElementById('target-protein-text');
+    const fatText = document.getElementById('target-fat-text');
+    const carbText = document.getElementById('target-carb-text');
+
+    if (proText) proText.innerText = `/ ${targetMacros.protein}g`;
+    if (fatText) fatText.innerText = `/ ${targetMacros.fat}g`;
+    if (carbText) carbText.innerText = `/ tối đa ${targetMacros.carb}g`;
+}
+
+function applyLowCarbMacroTargets(weightForProtein = null) {
+    const weight = parseFloat(weightForProtein) || getCurrentWeightForMacro();
+    const carbTarget = LOW_CARB_MAX_CARB_G;
+    const proteinTarget = Math.round(weight * LOW_CARB_PROTEIN_PER_KG);
+
+    // Low-carb: cố định carb thấp, giữ protein đủ cao, phần calo còn lại chuyển sang fat.
+    const caloriesFromProtein = proteinTarget * 4;
+    const caloriesFromCarb = carbTarget * 4;
+    const remainingCaloriesForFat = dailyTargetCal - caloriesFromProtein - caloriesFromCarb;
+    const fatTarget = Math.max(Math.round(remainingCaloriesForFat / 9), 0);
+
+    targetMacros.protein = proteinTarget;
+    targetMacros.fat = fatTarget;
+    targetMacros.carb = carbTarget;
+
+    updateMacroTargetTexts();
+}
+
 function upsertWeightHistoryEntry(dateStr, weight) {
     let weightHistory = JSON.parse(localStorage.getItem('myWeightHistory')) || [];
     const numericWeight = parseFloat(weight);
@@ -279,10 +330,15 @@ function addFoodToMeal() {
     }
 
     const foodItem = foodDatabase.find(f => f.id === foodId);
+    if (!foodItem) {
+        alert('Không tìm thấy món ăn này trong dữ liệu!');
+        return;
+    }
+
     const calculatedCal = (grams / 100) * foodItem.calPer100g;
 
     dailyData[currentEditingMeal].push({
-        id: Date.now(),
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         name: foodItem.name,
         grams: grams,
         calories: calculatedCal
@@ -290,40 +346,54 @@ function addFoodToMeal() {
 
     document.getElementById('food-gram').value = '';
     renderModalList();
+    refreshMealAfterChange(); // Thêm món xong cập nhật và lưu luôn
 }
 
 function renderModalList() {
     const ul = document.getElementById('current-meal-items');
+    if (!ul || !currentEditingMeal || !dailyData[currentEditingMeal]) return;
+
     ul.innerHTML = '';
+
+    if (dailyData[currentEditingMeal].length === 0) {
+        let emptyLi = document.createElement('li');
+        emptyLi.innerHTML = `<span>Chưa có món nào trong bữa này</span>`;
+        ul.appendChild(emptyLi);
+        return;
+    }
+
     dailyData[currentEditingMeal].forEach(item => {
         let li = document.createElement('li');
         li.innerHTML = `<span>${item.name} (${item.grams}g)</span> 
                         <span><b>${Math.round(item.calories)} kcal</b> 
-                        <span class="delete-item" onclick="removeFood(${item.id})">&times;</span></span>`;
+                        <button type="button" class="delete-item" onclick="removeFood('${item.id}')" title="Xoá món này">&times;</button></span>`;
         ul.appendChild(li);
     });
 }
 
-function removeFood(itemId) {
-    dailyData[currentEditingMeal] = dailyData[currentEditingMeal].filter(item => item.id !== itemId);
-    renderModalList();
-    
-    const totalMealCal = dailyData[currentEditingMeal].reduce((sum, item) => sum + item.calories, 0);
-    document.getElementById(`${currentEditingMeal}-cal`).innerText = `${Math.round(totalMealCal)} kcal`;
-    
+function refreshMealAfterChange(mealType = currentEditingMeal) {
+    if (!mealType || !dailyData[mealType]) return;
+
+    const totalMealCal = dailyData[mealType].reduce((sum, item) => sum + item.calories, 0);
+    const mealCalEl = document.getElementById(`${mealType}-cal`);
+    if (mealCalEl) mealCalEl.innerText = `${Math.round(totalMealCal)} kcal`;
+
     updateTotalCalories();
-    updateNutrition(); 
+    updateNutrition();
     saveToLocalStorage();
 }
 
+function removeFood(itemId) {
+    if (!currentEditingMeal || !dailyData[currentEditingMeal]) return;
+
+    dailyData[currentEditingMeal] = dailyData[currentEditingMeal].filter(item => String(item.id) !== String(itemId));
+    renderModalList();
+    refreshMealAfterChange();
+}
+
 function saveMeal() {
-    const totalMealCal = dailyData[currentEditingMeal].reduce((sum, item) => sum + item.calories, 0);
-    document.getElementById(`${currentEditingMeal}-cal`).innerText = `${Math.round(totalMealCal)} kcal`;
-    
-    updateTotalCalories();
-    updateNutrition(); 
+    refreshMealAfterChange();
     closeModal();
-    saveToLocalStorage();
 }
 
 function updateTotalCalories() {
@@ -423,19 +493,7 @@ function calculateTargets(showAlert = true) {
 
     dailyTargetCal = getDynamicTargetForDate(currentDateString);
     dailyTargetWater = weight * 35;
-    targetMacros.protein = Math.round((dailyTargetCal * 0.3) / 4);
-    targetMacros.fat = Math.round((dailyTargetCal * 0.3) / 9);
-    targetMacros.carb = Math.round((dailyTargetCal * 0.4) / 4);
-
-    if (document.getElementById('target-protein-text')) {
-        document.getElementById('target-protein-text').innerText = `/ ${targetMacros.protein}g`;
-    }
-    if (document.getElementById('target-fat-text')) {
-        document.getElementById('target-fat-text').innerText = `/ ${targetMacros.fat}g`;
-    }
-    if (document.getElementById('target-carb-text')) {
-        document.getElementById('target-carb-text').innerText = `/ ${targetMacros.carb}g`;
-    }
+    applyLowCarbMacroTargets(weight);
     if (document.getElementById('target-cal-display')) {
         document.getElementById('target-cal-display').innerText = `${Math.round(dailyTargetCal)} kcal`;
     }
@@ -506,7 +564,44 @@ function updateNutrition() {
 
     document.getElementById('progress-protein').style.width = proPercent + '%';
     document.getElementById('progress-fat').style.width = fatPercent + '%';
-    document.getElementById('progress-carb').style.width = carbPercent + '%';
+
+    const carbProgress = document.getElementById('progress-carb');
+    const carbText = document.getElementById('total-carb');
+    const lowCarbWarning = document.getElementById('lowcarb-warning');
+
+    if (carbProgress) {
+        carbProgress.style.width = carbPercent + '%';
+        if (totalCarb > targetMacros.carb) {
+            carbProgress.style.background = '#e53935';
+        } else if (totalCarb >= targetMacros.carb * 0.8) {
+            carbProgress.style.background = '#f59e0b';
+        } else {
+            carbProgress.style.background = '#43a047';
+        }
+    }
+
+    if (carbText) {
+        if (totalCarb > targetMacros.carb) {
+            carbText.style.color = '#e53935';
+            carbText.style.fontWeight = 'bold';
+        } else {
+            carbText.style.color = '#333';
+            carbText.style.fontWeight = 'normal';
+        }
+    }
+
+    if (lowCarbWarning) {
+        const remainingCarb = targetMacros.carb - totalCarb;
+        if (remainingCarb < 0) {
+            lowCarbWarning.innerText = `⚠️ Đã vượt giới hạn low-carb ${Math.abs(remainingCarb).toFixed(1)}g carb.`;
+            lowCarbWarning.classList.remove('hidden');
+            lowCarbWarning.style.color = '#e53935';
+        } else {
+            lowCarbWarning.innerText = `Low-carb: còn ${remainingCarb.toFixed(1)}g carb trong hôm nay.`;
+            lowCarbWarning.classList.remove('hidden');
+            lowCarbWarning.style.color = '#16a34a';
+        }
+    }
 
     const TARGET_FIBER = 25; 
     const TARGET_VITC = 90; 
@@ -716,20 +811,8 @@ function loadFromLocalStorage() {
     // ========================================================
     dailyTargetCal = getDynamicTargetForDate(currentDateString);
     
-    // Tự động tính lại tỉ lệ 30% Protein, 30% Fat, 40% Carb dựa trên Calo mới
-    targetMacros.protein = Math.round((dailyTargetCal * 0.3) / 4);
-    targetMacros.fat = Math.round((dailyTargetCal * 0.3) / 9);
-    targetMacros.carb = Math.round((dailyTargetCal * 0.4) / 4);
-
-    const proText = document.getElementById('target-protein-text');
-    const fatText = document.getElementById('target-fat-text');
-    const carbText = document.getElementById('target-carb-text');
-
-    if (dailyTargetCal > 0) {
-        if (proText) proText.innerText = `/ ${targetMacros.protein}g`;
-        if (fatText) fatText.innerText = `/ ${targetMacros.fat}g`;
-        if (carbText) carbText.innerText = `/ ${targetMacros.carb}g`;
-    }
+    // Low-carb: carb cố định tối đa 50g/ngày, protein theo cân nặng, fat lấy phần calo còn lại
+    applyLowCarbMacroTargets();
 
     if (typeof updateTotalCalories === 'function') updateTotalCalories();
     if (typeof updateNutrition === 'function') updateNutrition();
