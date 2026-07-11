@@ -1,3 +1,23 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .nutrition-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0,1fr));
@@ -9,11 +29,20 @@
 .meal-tag {
   display: inline-flex;
   padding: 4px 7px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: var(--blue-soft);
   font-size: .72rem;
   font-weight: 850;
 }
+.meal-tag--breakfast { background: var(--mustard-soft); border-color: var(--mustard); }
+.meal-tag--lunch { background: var(--sage-soft); border-color: var(--sage); }
+.meal-tag--snack { background: var(--blue-soft); border-color: var(--blue); }
+.meal-tag--dinner { background: var(--coral-soft); border-color: var(--coral); }
+.data-table tr[data-meal="breakfast"] td:first-child { box-shadow: inset 3px 0 0 var(--mustard); }
+.data-table tr[data-meal="lunch"] td:first-child { box-shadow: inset 3px 0 0 var(--sage); }
+.data-table tr[data-meal="snack"] td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+.data-table tr[data-meal="dinner"] td:first-child { box-shadow: inset 3px 0 0 var(--coral); }
 .edit-row-input {
   width: 100%;
   min-width: 120px;

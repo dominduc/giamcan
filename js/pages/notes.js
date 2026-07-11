@@ -24,12 +24,6 @@ function init() {
       scheduleSave();
     });
   });
-
-  document.querySelector('[data-clear-format]').addEventListener('click', () => {
-    editor.focus();
-    document.execCommand('removeFormat', false, null);
-    scheduleSave();
-  });
 }
 
 function scheduleSave() {

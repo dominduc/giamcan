@@ -58,7 +58,7 @@ function renderRow(item) {
   const isEditing = editing?.id === item.id && editing?.meal === item.meal;
   return `
     <tr data-row data-id="${item.id}" data-meal="${item.meal}">
-      <td><span class="meal-tag">${item.mealLabel}</span></td>
+      <td><span class="meal-tag meal-tag--${item.meal}">${item.mealLabel}</span></td>
       <td>${isEditing
         ? `<input class="edit-row-input" data-edit-name value="${escapeHtml(item.name)}">`
         : escapeHtml(item.name)}</td>
@@ -104,15 +104,27 @@ function bindRows() {
 }
 
 function renderSummary(day) {
-  const food = getDayFoodCalories(day);
   const targetInfo = getCalorieTargetsForDate(selectedDate);
-  const target = targetInfo?.targetCalories || 0;
+  const hasActiveJourney = Boolean(targetInfo);
+
+  // Trước ngày bắt đầu hành trình (hoặc khi chưa tạo mục tiêu),
+  // dữ liệu món ăn vẫn được giữ để làm lịch sử/gợi ý nhưng KHÔNG tham gia bảng tính.
+  if (!hasActiveJourney) {
+    setText('#sum-target', '0 kcal');
+    setText('#sum-food', '0 kcal');
+    setText('#sum-exercise', '0 kcal');
+    setText('#sum-remaining', '0 kcal');
+    return;
+  }
+
+  const food = getDayFoodCalories(day);
+  const target = targetInfo.targetCalories;
   const remaining = target - food + day.exerciseCalories;
 
-  setText('#sum-target', target ? `${Math.round(target)} kcal` : 'Chưa có');
+  setText('#sum-target', `${Math.round(target)} kcal`);
   setText('#sum-food', `${Math.round(food)} kcal`);
   setText('#sum-exercise', `${Math.round(day.exerciseCalories)} kcal`);
-  setText('#sum-remaining', target ? `${Math.round(remaining)} kcal` : '—');
+  setText('#sum-remaining', `${Math.round(remaining)} kcal`);
 }
 
 function renderMemory() {
@@ -132,3 +144,4 @@ function escapeHtml(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   })[char]);
 }
+

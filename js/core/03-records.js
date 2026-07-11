@@ -17,6 +17,7 @@ export function emptyDayRecord() {
     },
     exerciseCalories: 0,
     waterCups: 0,
+    confirmed: false,
     updatedAt: Date.now()
   };
 }
@@ -49,8 +50,21 @@ export function normalizeDay(day) {
   }
   base.exerciseCalories = Math.max(0, Number(day?.exerciseCalories) || 0);
   base.waterCups = Math.max(0, Math.round(Number(day?.waterCups) || 0));
+  base.confirmed = Boolean(day?.confirmed);
   base.updatedAt = Number(day?.updatedAt) || Date.now();
   return base;
+}
+
+/**
+ * Đánh dấu một ngày là "đã xác nhận không nạp thêm calo".
+ * Chỉ những ngày đã xác nhận mới được 05-journey.js đưa vào tính
+ * chênh lệch năng lượng / mốc 1kg, tránh tính nhầm số liệu còn dở dang.
+ */
+export function setDayConfirmed(dateKey, confirmed) {
+  const day = getDayRecord(dateKey);
+  day.confirmed = Boolean(confirmed);
+  saveDayRecord(dateKey, day);
+  return day;
 }
 
 export function addFood(dateKey, meal, name, calories) {
@@ -62,6 +76,7 @@ export function addFood(dateKey, meal, name, calories) {
     createdAt: Date.now()
   };
   day.meals[meal].push(item);
+  day.confirmed = false;
   saveDayRecord(dateKey, day);
   return item;
 }
@@ -74,6 +89,7 @@ export function updateFood(dateKey, meal, itemId, patch) {
   if (Number.isFinite(Number(patch.calories)) && Number(patch.calories) >= 0) {
     item.calories = Math.round(Number(patch.calories) * 10) / 10;
   }
+  day.confirmed = false;
   saveDayRecord(dateKey, day);
   return true;
 }
@@ -83,6 +99,7 @@ export function deleteFood(dateKey, meal, itemId) {
   const before = day.meals[meal].length;
   day.meals[meal] = day.meals[meal].filter(entry => entry.id !== itemId);
   if (day.meals[meal].length === before) return false;
+  day.confirmed = false;
   saveDayRecord(dateKey, day);
   return true;
 }

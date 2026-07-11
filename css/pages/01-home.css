@@ -48,6 +48,9 @@
 }
 .cal-item.highlight { background: var(--sage-soft); border-style: solid; }
 .cal-math { text-align: center; color: var(--ink-soft); font-size: 1.05rem; font-weight: 900; }
+.confirm-day-card { padding: 14px; display: grid; gap: 8px; text-align: center; }
+.confirm-day-card .button { width: 100%; }
+.confirm-day-card .button:disabled { opacity: .62; cursor: default; box-shadow: none; }
 .meal-section { padding: 14px; }
 .meal-section[data-meal="breakfast"] { border-top: 5px solid var(--mustard); }
 .meal-section[data-meal="lunch"] { border-top: 5px solid var(--sage); }

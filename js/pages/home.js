@@ -6,7 +6,8 @@ import {
   getDayRecord,
   getDayFoodCalories,
   getMealCalories,
-  saveDayRecord
+  saveDayRecord,
+  setDayConfirmed
 } from '../core/03-records.js';
 import { getCalorieTargetsForDate } from '../core/05-journey.js';
 
@@ -31,6 +32,7 @@ function init() {
   mealSections.forEach(section => setupMealEntry(section));
   setupExercise();
   setupWater();
+  setupConfirmDay();
   render();
 
   setInterval(checkMidnightBoundary, 60000);
@@ -122,6 +124,7 @@ function setupExercise() {
     }
     const day = getDayRecord(selectedDate);
     day.exerciseCalories = calories;
+    day.confirmed = false;
     saveDayRecord(selectedDate, day);
     input.value = '';
     render();
@@ -144,18 +147,62 @@ function updateWater(change) {
   render();
 }
 
+function setupConfirmDay() {
+  document.querySelector('#confirm-day-btn').addEventListener('click', () => {
+    syncDateBeforeAction();
+    if (selectedDate > localDateKey()) return;
+    setDayConfirmed(selectedDate, true);
+    render();
+  });
+}
+
+function renderConfirmDay(day) {
+  const button = document.querySelector('#confirm-day-btn');
+  const label = document.querySelector('#confirm-day-btn-label');
+  const status = document.querySelector('#confirm-day-status');
+  const isFuture = selectedDate > localDateKey();
+
+  if (isFuture) {
+    button.disabled = true;
+    label.textContent = 'Không thể xác nhận ngày trong tương lai';
+    status.textContent = '';
+    return;
+  }
+
+  if (day.confirmed) {
+    button.disabled = true;
+    label.textContent = 'Đã xác nhận ngày này';
+    status.innerHTML = 'Ngày này đã được tính vào hành trình cân nặng. <button type="button" class="button ghost" id="undo-confirm-day" style="min-height:32px;padding:4px 10px;font-size:.76rem">Hủy xác nhận</button>';
+    document.querySelector('#undo-confirm-day')?.addEventListener('click', () => {
+      setDayConfirmed(selectedDate, false);
+      render();
+    });
+    return;
+  }
+
+  button.disabled = false;
+  label.textContent = 'Xác nhận không nạp thêm calo';
+  status.textContent = 'Chưa xác nhận: ngày này chưa được tính vào hành trình cân nặng. Bấm khi bạn chắc chắn không ăn/tập thêm gì nữa.';
+}
+
 function render() {
   const day = getDayRecord(selectedDate);
   const foodCalories = getDayFoodCalories(day);
   const targets = getCalorieTargetsForDate(selectedDate);
-  const target = targets?.targetCalories || 0;
-  const remaining = target - foodCalories + day.exerciseCalories;
+  const hasActiveJourney = Boolean(targets);
+  const target = hasActiveJourney ? targets.targetCalories : 0;
+  const remaining = hasActiveJourney
+    ? target - foodCalories + day.exerciseCalories
+    : 0;
 
-  setText('#summary-target', target ? Math.round(target) : '—');
-  setText('#summary-food', Math.round(foodCalories));
-  setText('#summary-burn', Math.round(day.exerciseCalories));
-  setText('#summary-remaining', target ? Math.round(remaining) : '—');
-  document.querySelector('#profile-hint').classList.toggle('hidden', Boolean(targets));
+  // Trước ngày bắt đầu hành trình (hoặc khi chưa tạo mục tiêu),
+  // bảng tổng quan không tham gia tính toán và phải hiển thị toàn bộ là 0.
+  setText('#summary-target', hasActiveJourney ? Math.round(target) : 0);
+  setText('#summary-food', hasActiveJourney ? Math.round(foodCalories) : 0);
+  setText('#summary-burn', hasActiveJourney ? Math.round(day.exerciseCalories) : 0);
+  setText('#summary-remaining', hasActiveJourney ? Math.round(remaining) : 0);
+  document.querySelector('#profile-hint').classList.toggle('hidden', hasActiveJourney);
+  renderConfirmDay(day);
 
   mealSections.forEach(section => {
     const meal = section.dataset.meal;

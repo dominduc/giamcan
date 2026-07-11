@@ -1,23 +1,23 @@
 # Weight Note
 
-Ứng dụng ghi chú quá trình tăng/giảm cân chạy hoàn toàn trên trình duyệt và lưu dữ liệu bằng `localStorage` của chính máy đang mở app.
+Weight Note là ứng dụng ghi chép quá trình tăng/giảm cân chạy trực tiếp trên trình duyệt và lưu dữ liệu bằng `localStorage` của chính trình duyệt đang mở app.
 
-## Mục tiêu
+Ứng dụng ưu tiên:
 
-Weight Note ưu tiên thao tác nhanh trên điện thoại:
+- thao tác nhanh trên điện thoại;
+- không cần tài khoản;
+- không cần database từ xa;
+- không có kho món ăn dựng sẵn;
+- dữ liệu món ăn cũ của chính người dùng trở thành nguồn gợi ý;
+- cân nặng được ước tính theo các mốc 1 kg và được hiệu chỉnh bằng cân thật.
 
-- Ghi món ăn bằng 1 hàng ngang: **tên món → calo → lưu**.
-- Không cần database món ăn có sẵn. Gợi ý chỉ lấy từ những món còn tồn tại trong lịch sử đã nhập.
-- Theo dõi calo ăn vào, calo tập luyện, nước uống theo cốc 250 ml.
-- Trang Dinh dưỡng dùng để xem, sửa và xóa các món đã ghi.
-- Trang Ghi chú là một trình soạn thảo tự do kiểu mini Word, tự lưu.
-- Trang Cá nhân tính BMR/TDEE, mục tiêu calo, biểu đồ cân nặng ước tính theo ngày và mốc cân thật định kỳ.
+---
 
 ## Chạy app
 
-Vì JavaScript dùng ES Modules, nên mở bằng localhost thay vì double-click file HTML.
+JavaScript dùng ES Modules, vì vậy nên mở bằng localhost thay vì double-click trực tiếp file HTML.
 
-Ví dụ với Python:
+Ví dụ:
 
 ```bash
 cd weight-note-app
@@ -30,18 +30,108 @@ Sau đó mở:
 http://localhost:8000
 ```
 
+---
+
 ## 4 trang chính
 
-- `index.html`: nhập nhanh đồ ăn, tập luyện, nước.
-- `nutrition.html`: bảng món ăn theo ngày, sửa/xóa, tổng calo.
-- `notes.html`: ghi chú tự do, tự lưu.
-- `profile.html`: hồ sơ, mục tiêu, biểu đồ, cập nhật cân thật và reset hành trình.
+### `index.html` — Trang chủ
 
-## Quy tắc lưu dữ liệu
+Dùng để ghi nhanh:
 
-Dữ liệu nằm trong `localStorage` theo origin của localhost. Nếu đổi cổng hoặc đổi domain, trình duyệt có thể coi đó là một vùng lưu trữ khác.
+- món ăn theo 4 bữa;
+- calo của từng món;
+- calo tập thể dục;
+- số cốc nước;
+- xác nhận ngày đã ghi xong (không nạp thêm calo).
 
-Các key chính:
+Mỗi món ăn nhập theo một hàng ngắn:
+
+```text
+Tên món → Calo → Lưu
+```
+
+Sau khi lưu:
+
+1. món được ghi vào đúng ngày và đúng bữa;
+2. ô nhập được xóa để nhập món tiếp theo;
+3. Trang Dinh dưỡng đọc lại cùng dữ liệu đó;
+4. ngày đó tự động chuyển về trạng thái **chưa xác nhận** (xem mục bên dưới);
+5. nếu ngày đang nằm trong hành trình và đã được xác nhận thì số calo ngày đó mới tham gia tính toán hành trình.
+
+### `nutrition.html` — Dinh dưỡng
+
+Dùng để:
+
+- xem toàn bộ món đã ghi theo ngày;
+- sửa tên món;
+- sửa calo;
+- xóa món;
+- xem tổng calo của ngày;
+- xem danh sách món còn tồn tại trong lịch sử để làm nguồn gợi ý.
+
+Nhãn từng bữa được tô màu khớp với màu viền 4 bữa ở Trang chủ (sáng: vàng mustard, trưa: xanh sage, chiều/phụ: xanh dương, tối: đỏ coral) để dễ nhận diện khi danh sách nhiều bữa xen kẽ.
+
+Sửa hoặc xóa món ở đây sẽ làm thay đổi dữ liệu ngày tương ứng, tự động đưa ngày đó về trạng thái **chưa xác nhận**, và lần mô phỏng hành trình tiếp theo sẽ dùng dữ liệu mới.
+
+### `notes.html` — Ghi chú
+
+Là một trang ghi chú tự do:
+
+- tiêu đề;
+- vùng viết `contenteditable`;
+- hoàn tác / làm lại;
+- đậm / nghiêng / gạch chân;
+- H1 / H2;
+- danh sách chấm / danh sách số;
+- tự lưu vào `localStorage`.
+
+### `profile.html` — Cá nhân
+
+Dùng để:
+
+- nhập hồ sơ một lần;
+- nhập cân nặng ban đầu;
+- nhập cân nặng mục tiêu;
+- nhập ngày bắt đầu và ngày kết thúc;
+- chọn mức hoạt động nền;
+- xem BMR/TDEE và mục tiêu calo;
+- xem biểu đồ;
+- cập nhật cân thật;
+- xóa toàn bộ dữ liệu để bắt đầu lại.
+
+Sau khi lưu hồ sơ, form thiết lập bị khóa. Muốn nhập lại từ đầu phải dùng nút **Xóa toàn bộ dữ liệu**.
+
+---
+
+## Xác nhận ngày (chốt dữ liệu trước khi tính hành trình)
+
+App **không tự đoán** một ngày đã ghi xong hay chưa. Việc chỉ dựa vào "có ăn hoặc có tập" để tính chênh lệch năng lượng dễ gây hiểu lầm: mới ghi bữa sáng buổi sáng đã bị tính như thể cả ngày chỉ ăn từng đó, dẫn đến thâm hụt ảo.
+
+Vì vậy Trang chủ có nút:
+
+```text
+Xác nhận không nạp thêm calo
+```
+
+nằm ở cuối trang, dưới mục Tập thể dục và Lượng nước.
+
+Nguyên tắc:
+
+- một ngày chỉ tham gia tính chênh lệch năng lượng / mốc 1 kg trong hành trình **sau khi** đã bấm nút này;
+- ngày chưa xác nhận vẫn hiển thị đầy đủ số liệu tạm (đã nạp, thể dục, còn lại) ở Trang chủ và Trang Dinh dưỡng, nhưng **không** được đưa vào mô phỏng hành trình;
+- thêm, sửa hoặc xóa món ăn, hoặc đổi lại calo tập thể dục, sẽ **tự động hủy xác nhận** của ngày đó — buộc xác nhận lại sau khi số liệu đã đổi. Ghi nước không ảnh hưởng vì nước không liên quan tới phép tính calo;
+- có thể bấm **Hủy xác nhận** nếu lỡ tay, mà không cần sửa lại dữ liệu;
+- không thể xác nhận cho ngày trong tương lai.
+
+Trạng thái xác nhận được lưu cùng bản ghi của từng ngày trong `dailyRecords`, không phải key riêng.
+
+---
+
+## Dữ liệu lưu ở đâu?
+
+Toàn bộ dữ liệu nằm trong `localStorage` theo origin của trang web.
+
+Các key hiện tại:
 
 ```text
 weightNote.profile.v1
@@ -51,108 +141,257 @@ weightNote.weeklyWeights.v1
 weightNote.note.v1
 ```
 
-### Mốc 00:00
+Lưu ý:
 
-App không cần chạy một timer để "reset" đúng 00:00. Mỗi bản ghi được gắn với ngày local dạng `YYYY-MM-DD`. Sau 00:00, hành động mới tự thuộc ngày mới. Dữ liệu ngày cũ vẫn được giữ làm lịch sử.
+- `localhost:8000` và `localhost:5500` là hai vùng lưu khác nhau;
+- `localhost` và GitHub Pages cũng là hai vùng lưu khác nhau;
+- đổi trình duyệt hoặc đổi máy sẽ không tự mang dữ liệu sang;
+- xóa dữ liệu trình duyệt có thể làm mất dữ liệu.
+
+---
+
+## Quy tắc ngày và mốc 00:00
+
+Mỗi bản ghi được gắn với ngày local dạng:
+
+```text
+YYYY-MM-DD
+```
+
+App không cần chạy một lệnh “reset dữ liệu” đúng 00:00.
+
+Khi đang đứng ở ngày hôm nay và đồng hồ qua 00:00:
+
+- app nhận ra ngày local đã đổi;
+- thao tác mới chuyển sang ngày mới;
+- dữ liệu ngày cũ vẫn giữ nguyên.
+
+Nếu người dùng chủ động mở một ngày cũ để sửa dữ liệu thì app vẫn làm việc với ngày đang được chọn.
+
+---
+
+## Quy tắc trước khi có hành trình
+
+Trước khi tạo hồ sơ và hành trình:
+
+- vẫn có thể ghi món ăn;
+- vẫn có thể tạo lịch sử món để gợi ý;
+- vẫn có thể ghi tập luyện, nước và ghi chú;
+- bảng mục tiêu calo không tham gia tính hành trình.
+
+Tại các ngày nằm ngoài khoảng hành trình:
+
+```text
+Mục tiêu = 0
+Đã nạp trong bảng hành trình = 0
+Thể dục trong bảng hành trình = 0
+Còn lại = 0
+```
+
+Dữ liệu món ăn vẫn có thể tồn tại trong lịch sử để phục vụ gợi ý.
+
+---
 
 ## Logic gợi ý món ăn
 
-Không có kho món ăn độc lập.
+Không có database món ăn cố định.
 
-Danh sách gợi ý được dựng trực tiếp từ toàn bộ món còn tồn tại trong `dailyRecords`:
+Nguồn gợi ý được dựng trực tiếp từ những món còn tồn tại trong `dailyRecords`.
 
-1. Người dùng từng lưu một món → món đó có thể được gợi ý.
-2. Gõ tên gần giống → app lọc các món cũ.
-3. Chọn món → tên và mức calo gần nhất được điền lại.
-4. Người dùng vẫn có thể sửa calo trước khi lưu.
-5. Nếu mọi bản ghi của một món đều bị xóa khỏi lịch sử → món đó tự biến mất khỏi gợi ý.
+Luồng:
 
-## Logic biểu đồ và 2 nguồn dữ liệu
+1. người dùng từng lưu một món;
+2. món đó còn ít nhất một bản ghi trong lịch sử;
+3. lần sau gõ tên gần giống, app tìm trong lịch sử;
+4. chọn món gợi ý thì app điền lại tên và mức calo đã nhớ;
+5. người dùng vẫn có thể sửa calo trước khi lưu;
+6. khi mọi bản ghi của món đó bị xóa khỏi lịch sử, món đó biến mất khỏi gợi ý.
 
-### Nguồn 1: ước tính hàng ngày
+---
 
-Mỗi ngày có dữ liệu ăn hoặc tập luyện:
+## Công thức năng lượng
 
-```text
-thâm hụt ước tính = calo duy trì + calo tập luyện - calo đã ăn
-```
+### BMR
 
-Sau đó app ước tính thay đổi cân nặng từ chênh lệch năng lượng.
-
-### Nguồn 2: cân nặng thực tế
-
-Mốc cân thực tế có quyền ưu tiên cao hơn ước tính.
-
-Ví dụ:
-
-```text
-Bắt đầu: 80 kg
-Ngày 10 app ước tính: 75 kg
-Ngày 10 cân thật: 77 kg
-```
-
-Kết quả:
-
-- Mốc ban đầu **80 kg vẫn giữ nguyên**.
-- Điểm ngày 10 chuyển từ **75 kg → 77 kg**.
-- Từ sau ngày 10, biểu đồ tính tiếp từ **77 kg**.
-- Các điểm trước ngày 10 không bị sửa ngược lại.
-
-Đây là nguyên tắc "ước tính hàng ngày + điểm neo cân thật".
-
-## Calo thay đổi theo cân nặng
-
-App không dùng một mức calo cố định cho toàn bộ hành trình.
-
-Mỗi khi cân nặng ước tính hoặc cân thật thay đổi, app tính lại mức năng lượng duy trì từ cân nặng hiện tại. Vì vậy một người ở 90 kg và cùng người đó khi xuống 80 kg có thể có mức duy trì và mục tiêu nạp khác nhau.
-
-Công thức BMR dùng biến thể Mifflin–St Jeor:
+App dùng biến thể Mifflin–St Jeor:
 
 ```text
 Nam: 10 × kg + 6.25 × cm − 5 × tuổi + 5
 Nữ: 10 × kg + 6.25 × cm − 5 × tuổi − 161
 ```
 
-TDEE trong app:
+### Calo duy trì
 
 ```text
 TDEE = BMR × hệ số hoạt động nền
 ```
 
-Calo tập luyện chủ động nhập ở Trang chủ được cộng riêng, nên hệ số hoạt động trong hồ sơ chỉ đại diện cho việc học/công việc và vận động nền.
+Mức hoạt động trong hồ sơ chỉ đại diện cho việc học, công việc và vận động nền.
 
-Để vẽ ước tính đơn giản, bản này dùng quy đổi xấp xỉ `7.700 kcal ≈ 1 kg` cho chênh lệch năng lượng. Đây chỉ là mô hình ghi chép đơn giản; thay đổi cân nặng thực tế còn chịu ảnh hưởng bởi nước, glycogen, thành phần cơ thể và thích nghi chuyển hóa. Mốc cân thật hàng tuần được dùng để hiệu chỉnh lại đường ước tính.
+Calo tập thể dục chủ động được nhập riêng ở Trang chủ để tránh tính hai lần.
 
-## Reset hành trình
+### Chênh lệch năng lượng trong ngày
 
-Nút **Xóa hành trình** ở Trang Cá nhân xóa:
+Chỉ những ngày đã **xác nhận** (xem mục "Xác nhận ngày" ở trên) mới được tính:
 
-- hồ sơ tính toán;
-- cân nặng ban đầu/mục tiêu của hành trình;
-- ngày bắt đầu/kết thúc;
-- các mốc cân thật;
-- biểu đồ hành trình.
+```text
+chênh lệch năng lượng
+= calo duy trì
++ calo tập thể dục
+- calo đã ăn
+```
 
-Nó **không xóa**:
+Ngày chưa xác nhận có `chênh lệch năng lượng = 0` và không tham gia mô phỏng, dù đã có dữ liệu ăn/tập ghi dở dang.
 
-- nhật ký món ăn, vì dữ liệu này còn dùng cho gợi ý món cũ;
-- ghi chú tự do.
+Giá trị dương được hiểu là thâm hụt.
+Giá trị âm được hiểu là thặng dư.
 
-Sau khi reset, form thiết lập hồ sơ xuất hiện lại.
+App dùng quy đổi đơn giản:
+
+```text
+7.700 kcal ≈ 1 kg
+```
+
+Đây là mô hình ghi chép đơn giản, không phải phép đo y khoa.
+
+---
+
+## Quy tắc mốc 1 kg
+
+Cân nặng dùng để tính mục tiêu calo không giảm/tăng lẻ mỗi ngày.
+
+Ví dụ:
+
+```text
+Mốc hiện tại: 90 kg
+Mục tiêu nạp hiện tại: 1.544 kcal
+```
+
+Nếu tổng thâm hụt mới chỉ là:
+
+```text
+2.000 kcal
+5.000 kcal
+7.000 kcal
+```
+
+thì mốc cân dùng để tính vẫn là:
+
+```text
+90 kg
+```
+
+và mục tiêu calo vẫn giữ nguyên.
+
+Chỉ khi phần năng lượng tích lũy đạt đủ khoảng:
+
+```text
+7.700 kcal
+```
+
+thì app tạo mốc mới:
+
+```text
+90 kg → 89 kg
+```
+
+Sau đó mục tiêu calo mới được tính lại từ:
+
+- mốc cân mới;
+- cân mục tiêu;
+- ngày hiện tại của mốc;
+- số ngày còn lại tới ngày kết thúc.
+
+Quy tắc tương tự áp dụng cho tăng cân khi thặng dư tích lũy đủ một mốc 1 kg.
+
+---
+
+## Cân thật có ưu tiên cao nhất
+
+Ví dụ:
+
+```text
+Bắt đầu: 90 kg
+App đang ước tính: 89 kg
+Cân thật tại ngày kiểm tra: 87 kg
+```
+
+Kết quả:
+
+- `90 kg` ban đầu vẫn giữ nguyên;
+- tại ngày cân thật, mốc ước tính được thay bằng `87 kg`;
+- phần năng lượng tích lũy dở dang trước đó được xóa;
+- từ ngày đó trở đi app tính tiếp từ `87 kg`;
+- mục tiêu calo được tính lại từ `87 kg` và thời gian còn lại.
+
+Cân thật là điểm neo có ưu tiên cao hơn mốc ước tính từ calo.
+
+---
+
+## Biểu đồ
+
+Biểu đồ có 3 lớp dữ liệu:
+
+1. **Lịch trình mục tiêu**  
+   Đường tham chiếu từ cân ban đầu tới cân mục tiêu trong toàn bộ thời gian.
+
+2. **Ước tính từ calo**  
+   Đường dạng bậc, chỉ đổi khi đạt mốc 1 kg hoặc khi có cân thật.
+
+3. **Cân thật**  
+   Các điểm người dùng nhập thủ công.
+
+Zoom `1×`, `2×`, `4×` chỉ làm biểu đồ rộng ra bên trong vùng cuộn ngang. Khung app không được phình theo.
+
+---
+
+## Reset toàn bộ dữ liệu
+
+Nút **Xóa toàn bộ dữ liệu** ở Trang Cá nhân xóa toàn bộ key hiện tại của Weight Note:
+
+- hồ sơ;
+- hành trình;
+- nhật ký món ăn;
+- lịch sử món dùng cho gợi ý;
+- tập thể dục;
+- nước;
+- cân thật;
+- ghi chú.
+
+Sau khi xóa:
+
+- dashboard biến mất;
+- form thiết lập ban đầu hiện lại;
+- app bắt đầu như mới.
+
+---
 
 ## Giao diện
 
-CSS được viết lại từ đầu theo phong cách **personal journal / health notebook**:
+CSS được viết bằng Vanilla CSS, không dùng Bootstrap, Tailwind hay DaisyUI.
 
+Phong cách hiện tại:
+
+- personal journal;
+- health notebook;
 - nền giấy;
-- nét viền như sổ tay;
-- card có bóng cứng nhẹ;
-- màu sage, mustard, coral và blue muted;
-- icon SVG nội bộ, không phụ thuộc thư viện icon bên ngoài;
-- điều hướng dưới cùng tối ưu cho điện thoại.
+- viền sổ tay;
+- màu sage / mustard / coral / blue muted;
+- icon SVG nội bộ;
+- bottom navigation tối ưu cho điện thoại.
+
+---
+
+## Tài liệu thêm
+
+- `STRUCTURE.md`: cấu trúc thư mục và trách nhiệm từng file.
+- `APP-FLOW.md`: luồng hoạt động đơn giản hóa và nhiều tình huống thao tác thực tế.
+
+---
 
 ## Lưu ý
 
-- Đây là app ghi chép cá nhân, không phải thiết bị y tế và không thay thế tư vấn của bác sĩ/chuyên gia dinh dưỡng.
-- Dữ liệu chỉ nằm trên trình duyệt hiện tại. Xóa dữ liệu trình duyệt hoặc localStorage có thể làm mất dữ liệu.
-- Nếu cần sao lưu lâu dài, nên bổ sung chức năng export/import JSON ở phiên bản sau.
+- Đây là app ghi chép cá nhân, không phải thiết bị y tế.
+- Kết quả cân nặng chỉ là ước tính.
+- Cân thật định kỳ là dữ liệu quan trọng để hiệu chỉnh lại mô hình.
+- Nên bổ sung export/import JSON trong tương lai nếu cần sao lưu dữ liệu lâu dài.

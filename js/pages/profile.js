@@ -1,3 +1,4 @@
+import { clearAppData } from '../core/01-storage.js';
 import { localDateKey, daysBetween, formatDateVi, shiftDateKey } from '../core/02-date.js';
 import { getDayFoodCalories, getDayRecord } from '../core/03-records.js';
 import { ACTIVITY_LEVELS, calculateBmr, calculateMaintenanceCalories } from '../core/04-calculations.js';
@@ -7,7 +8,6 @@ import {
   getJourney,
   getProfile,
   getWeeklyWeights,
-  resetJourneyOnly,
   saveProfileAndJourney,
   saveWeeklyWeight,
   simulateJourney
@@ -24,7 +24,6 @@ init();
 function init() {
   populateActivityOptions();
   form.addEventListener('submit', saveProfile);
-  document.querySelector('#edit-profile').addEventListener('click', showProfileForm);
   document.querySelector('#save-checkin').addEventListener('click', saveCheckin);
   document.querySelector('#reset-journey').addEventListener('click', resetJourney);
   document.querySelectorAll('[data-zoom]').forEach(button => {
@@ -70,10 +69,14 @@ function saveProfile(event) {
     return;
   }
 
-  saveProfileAndJourney(profile, journey);
-  document.querySelector('#profile-form-message').classList.add('hidden');
-  formCard.hidden = true;
-  render();
+  try {
+    saveProfileAndJourney(profile, journey);
+    document.querySelector('#profile-form-message').classList.add('hidden');
+    formCard.hidden = true;
+    render();
+  } catch (error) {
+    showFormMessage(error.message);
+  }
 }
 
 function validateProfile(profile, journey) {
@@ -89,25 +92,6 @@ function showFormMessage(message) {
   const element = document.querySelector('#profile-form-message');
   element.textContent = message;
   element.classList.remove('hidden');
-}
-
-function showProfileForm() {
-  const profile = getProfile();
-  const journey = getJourney();
-  if (profile && journey) fillForm(profile, journey);
-  formCard.hidden = false;
-  formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function fillForm(profile, journey) {
-  form.elements.gender.value = profile.gender;
-  form.elements.age.value = profile.age;
-  form.elements.heightCm.value = profile.heightCm;
-  form.elements.activityLevel.value = profile.activityLevel;
-  form.elements.startWeight.value = journey.startWeight;
-  form.elements.targetWeight.value = journey.targetWeight;
-  form.elements.startDate.value = journey.startDate;
-  form.elements.endDate.value = journey.endDate;
 }
 
 function saveCheckin() {
@@ -134,11 +118,16 @@ function saveCheckin() {
 
 function resetJourney() {
   const confirmed = confirm(
-    'Xóa hành trình hiện tại và tính lại từ đầu?\n\nCân nặng ban đầu, mục tiêu, biểu đồ và các mốc cân hàng tuần sẽ bị xóa. Nhật ký món ăn và ghi chú vẫn được giữ để tiếp tục đề xuất món cũ.'
+    'Xóa TOÀN BỘ dữ liệu của Weight Note trên máy này?\n\nHồ sơ, hành trình, nhật ký ăn uống, lịch sử món ăn đề xuất, tập thể dục, nước, cân nặng thực tế và ghi chú đều sẽ bị xóa. Không thể hoàn tác.'
   );
   if (!confirmed) return;
-  resetJourneyOnly();
+
+  clearAppData();
+  zoomLevel = 1;
   form.reset();
+  document.querySelectorAll('[data-zoom]').forEach(button => {
+    button.classList.toggle('active', Number(button.dataset.zoom) === 1);
+  });
   setDefaultDates();
   render();
 }
@@ -233,7 +222,7 @@ function renderChart() {
   const y = weight => margin.top + ((maxWeight - weight) / yRange) * plotHeight;
 
   const planPath = pathFromPoints(planned, x, y);
-  const estimatePath = pathFromPoints(estimated, x, y);
+  const estimatePath = stepPathFromPoints(estimated, x, y);
   const gridY = [];
   for (let kg = Math.ceil(minWeight / yStep) * yStep; kg <= maxWeight; kg += yStep) gridY.push(kg);
 
@@ -286,19 +275,34 @@ function renderChartDetail(point) {
   const intake = getDayFoodCalories(day);
   const profile = getProfile();
   const maintenance = calculateMaintenanceCalories(profile, point.weight);
-  const deficit = intake > 0 || day.exerciseCalories > 0
+  const deficit = day.confirmed
     ? maintenance + day.exerciseCalories - intake
     : 0;
 
   document.querySelector('#chart-detail').innerHTML = `
     <strong>${formatDateVi(point.date)} · ${point.weight.toFixed(2)} kg</strong><br>
     Nạp ${Math.round(intake)} kcal · Duy trì ước tính ${Math.round(maintenance)} kcal · Thể dục ${Math.round(day.exerciseCalories)} kcal
-    ${intake > 0 || day.exerciseCalories > 0 ? `· Chênh lệch ${deficit >= 0 ? '-' : '+'}${Math.abs(Math.round(deficit))} kcal` : '· Chưa có dữ liệu năng lượng ngày này'}
+    ${day.confirmed ? `· Chênh lệch ${deficit >= 0 ? '-' : '+'}${Math.abs(Math.round(deficit))} kcal` : '· Ngày này chưa xác nhận nên chưa được tính vào hành trình'}
   `;
 }
 
 function pathFromPoints(points, x, y) {
   return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(point.date).toFixed(2)} ${y(point.weight).toFixed(2)}`).join(' ');
+}
+
+// Đường cân ước tính đi theo bậc: giữ nguyên cân cho tới khi đủ 1 kg,
+// sau đó mới nhảy sang mốc mới. Cân thật hàng tuần cũng tạo một bậc mới.
+function stepPathFromPoints(points, x, y) {
+  if (!points.length) return '';
+
+  let path = `M ${x(points[0].date).toFixed(2)} ${y(points[0].weight).toFixed(2)}`;
+
+  for (let index = 1; index < points.length; index += 1) {
+    const point = points[index];
+    path += ` H ${x(point.date).toFixed(2)} V ${y(point.weight).toFixed(2)}`;
+  }
+
+  return path;
 }
 
 function setText(selector, value) {

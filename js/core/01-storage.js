@@ -23,3 +23,8 @@ export function writeJson(key, value) {
 export function removeKey(key) {
   localStorage.removeItem(key);
 }
+
+
+export function clearAppData() {
+  Object.values(KEYS).forEach(key => localStorage.removeItem(key));
+}
