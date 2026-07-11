@@ -1,0 +1,33 @@
+.nutrition-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+}
+.nutrition-summary .stat-chip { min-width: 0; }
+.nutrition-summary strong { font-size: 1rem; }
+.nutrition-summary span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meal-tag {
+  display: inline-flex;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  font-size: .72rem;
+  font-weight: 850;
+}
+.edit-row-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 7px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+}
+.history-hint-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.history-hint {
+  padding: 6px 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: rgba(255,255,255,.52);
+  font-size: .76rem;
+  font-weight: 750;
+}

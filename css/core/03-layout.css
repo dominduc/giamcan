@@ -1,0 +1,44 @@
+.app-shell {
+  width: min(100%, var(--content-max));
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 18px 14px calc(var(--nav-height) + 28px);
+}
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 7vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.page-kicker {
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.stack { display: grid; gap: 14px; }
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+.section-note {
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-size: .84rem;
+  line-height: 1.45;
+}
+.icon {
+  width: 1.2em;
+  height: 1.2em;
+  flex: 0 0 auto;
+}

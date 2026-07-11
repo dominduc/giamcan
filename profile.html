@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e7">
+  <title>Weight Note · Cá nhân</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="page-header">
+      <div><p class="page-kicker">Hành trình của bạn</p><h1 class="page-title">Cá nhân</h1></div>
+      <span class="badge"><svg class="icon"><use href="assets/icons.svg#scale"></use></svg> ước tính + cân thật</span>
+    </header>
+
+    <section class="paper-card profile-form-card" id="profile-form-card">
+      <h2 class="section-title">Thiết lập hành trình</h2>
+      <p class="section-note">Mức hoạt động bên dưới là vận động nền của việc học / công việc. Calo tập thể dục chủ động vẫn nhập riêng ở Trang chủ để tránh tính hai lần.</p>
+
+      <form id="profile-form" style="margin-top:14px">
+        <div class="form-grid">
+          <div class="field"><label for="gender">Giới tính</label><select class="select" id="gender" name="gender"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
+          <div class="field"><label for="age">Tuổi</label><input class="input" id="age" name="age" type="number" min="15" max="100" inputmode="numeric" required></div>
+          <div class="field"><label for="heightCm">Chiều cao (cm)</label><input class="input" id="heightCm" name="heightCm" type="number" min="100" max="250" step="0.1" required></div>
+          <div class="field"><label for="activity-level">Mức hoạt động nền</label><select class="select" id="activity-level" name="activityLevel"></select></div>
+          <div class="field"><label for="startWeight">Cân nặng ban đầu (kg)</label><input class="input" id="startWeight" name="startWeight" type="number" min="1" step="0.1" required></div>
+          <div class="field"><label for="targetWeight">Cân nặng muốn đạt (kg)</label><input class="input" id="targetWeight" name="targetWeight" type="number" min="1" step="0.1" required></div>
+          <div class="field"><label for="startDate">Ngày bắt đầu</label><input class="input" id="startDate" name="startDate" type="date" required></div>
+          <div class="field"><label for="endDate">Ngày muốn đạt mục tiêu</label><input class="input" id="endDate" name="endDate" type="date" required></div>
+        </div>
+        <div id="profile-form-message" class="form-message hidden"></div>
+        <div class="form-actions"><button class="button primary" type="submit"><svg class="icon"><use href="assets/icons.svg#save"></use></svg>Lưu tất cả</button></div>
+      </form>
+    </section>
+
+    <div class="stack hidden" id="profile-dashboard">
+      <section class="paper-card paper-card__body">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px">
+          <div><h2 class="section-title" id="journey-route">—</h2><p class="section-note" id="journey-dates">—</p></div>
+          <button class="button ghost" id="edit-profile" type="button"><svg class="icon"><use href="assets/icons.svg#edit"></use></svg>Chỉnh</button>
+        </div>
+        <div class="profile-summary">
+          <div class="stat-chip"><strong id="current-weight">—</strong><span>Cân hiện tại ước tính / mốc thật</span></div>
+          <div class="stat-chip"><strong id="maintenance-calories">—</strong><span>Calo duy trì hiện tại</span></div>
+          <div class="stat-chip"><strong id="target-calories">—</strong><span>Mục tiêu nạp hiện tại</span></div>
+          <div class="stat-chip"><strong id="journey-progress">—</strong><span>Tiến độ thời gian</span></div>
+        </div>
+        <p id="target-caution" class="form-message hidden">Lịch trình đang đòi hỏi mức nạp rất thấp, nên app đã chặn tại ngưỡng kỹ thuật bảo thủ. Đây chỉ là ước tính ghi chép, không phải chỉ định y khoa.</p>
+      </section>
+
+      <section class="paper-card chart-card">
+        <div class="chart-toolbar">
+          <div><h2 class="section-title">Biểu đồ cân nặng</h2><p class="section-note">Kéo ngang để xem xa hơn. Chạm vào đường ước tính để xem chi tiết ngày.</p></div>
+          <div class="zoom-group" aria-label="Zoom biểu đồ">
+            <button class="zoom-btn active" type="button" data-zoom="1">1×</button>
+            <button class="zoom-btn" type="button" data-zoom="2">2×</button>
+            <button class="zoom-btn" type="button" data-zoom="4">4×</button>
+          </div>
+        </div>
+        <div class="chart-scroll" id="chart-scroll"><svg id="weight-chart" class="weight-chart" role="img" aria-label="Biểu đồ cân nặng theo ngày"></svg></div>
+        <div class="chart-legend">
+          <span class="legend-key"><span class="legend-line"></span>Ước tính từ calo</span>
+          <span class="legend-key"><span class="legend-line plan"></span>Lịch trình mục tiêu</span>
+          <span class="legend-key"><span class="legend-dot"></span>Cân thật mỗi tuần</span>
+        </div>
+        <p class="section-note" id="chart-detail" style="margin-top:10px"></p>
+      </section>
+
+      <section class="paper-card checkin-card">
+        <h2 class="section-title">Cập nhật cân nặng thực tế</h2>
+        <p class="section-note">Mốc này có ưu tiên cao hơn ước tính. Ví dụ bắt đầu 80 kg, ngày 10 app ước tính 75 kg nhưng bạn cân thật 77 kg: điểm ngày 10 đổi thành 77 kg và các ngày sau tính tiếp từ 77 kg. Mốc 80 kg ban đầu không bị thay đổi.</p>
+        <div class="checkin-row" style="margin-top:12px">
+          <div class="field"><label for="checkin-date">Ngày cân</label><input class="input" id="checkin-date" type="date"></div>
+          <div class="field"><label for="checkin-weight">Cân nặng (kg)</label><input class="input" id="checkin-weight" type="number" min="1" step="0.1" inputmode="decimal" placeholder="Ví dụ 77"></div>
+          <button class="button primary" id="save-checkin" type="button"><svg class="icon"><use href="assets/icons.svg#save"></use></svg>Lưu mốc</button>
+        </div>
+        <div id="checkin-message" class="form-message hidden"></div>
+        <div class="checkin-history" id="checkin-history"></div>
+      </section>
+
+      <section class="paper-card profile-danger-zone">
+        <h2 class="section-title">Tính lại từ đầu</h2>
+        <p class="section-note">Xóa hồ sơ hành trình, biểu đồ và các mốc cân thực tế. Nhật ký món ăn vẫn được giữ để Trang chủ tiếp tục đề xuất các món còn tồn tại trong lịch sử; ghi chú cũng được giữ.</p>
+        <button class="button danger" id="reset-journey" type="button" style="margin-top:12px"><svg class="icon"><use href="assets/icons.svg#trash"></use></svg>Xóa hành trình</button>
+      </section>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Điều hướng chính">
+    <a class="nav-link" href="index.html"><svg class="icon"><use href="assets/icons.svg#home"></use></svg><span>Trang chủ</span></a>
+    <a class="nav-link" href="nutrition.html"><svg class="icon"><use href="assets/icons.svg#nutrition"></use></svg><span>Dinh dưỡng</span></a>
+    <a class="nav-link" href="notes.html"><svg class="icon"><use href="assets/icons.svg#note"></use></svg><span>Ghi chú</span></a>
+    <a class="nav-link active" href="profile.html"><svg class="icon"><use href="assets/icons.svg#profile"></use></svg><span>Cá nhân</span></a>
+  </nav>
+
+  <script type="module" src="js/pages/profile.js"></script>
+</body>
+</html>

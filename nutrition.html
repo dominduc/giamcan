@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e7">
+  <title>Weight Note · Dinh dưỡng</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="page-header">
+      <div><p class="page-kicker">Nhật ký năng lượng</p><h1 class="page-title">Dinh dưỡng</h1></div>
+      <span class="badge"><svg class="icon"><use href="assets/icons.svg#nutrition"></use></svg> sửa &amp; xóa</span>
+    </header>
+
+    <div class="date-switcher">
+      <button type="button" class="icon-button" data-date-prev aria-label="Ngày trước"><svg class="icon"><use href="assets/icons.svg#chevron-left"></use></svg></button>
+      <input class="input" type="date" id="date-picker" aria-label="Chọn ngày">
+      <button type="button" class="icon-button" data-date-next aria-label="Ngày sau"><svg class="icon"><use href="assets/icons.svg#chevron-right"></use></svg></button>
+    </div>
+
+    <div class="stack">
+      <section class="paper-card paper-card__body">
+        <div class="nutrition-summary">
+          <div class="stat-chip"><strong id="sum-target">Chưa có</strong><span>Mục tiêu</span></div>
+          <div class="stat-chip"><strong id="sum-food">0 kcal</strong><span>Đã nạp</span></div>
+          <div class="stat-chip"><strong id="sum-exercise">0 kcal</strong><span>Thể dục</span></div>
+          <div class="stat-chip"><strong id="sum-remaining">—</strong><span>Còn lại</span></div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div>
+          <h2 class="section-title">Các món đã ghi</h2>
+          <p class="section-note">Trang này lấy trực tiếp dữ liệu từ Trang chủ. Sửa hoặc xóa ở đây sẽ cập nhật lại tổng calo và biểu đồ.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Bữa</th><th>Món ăn</th><th style="text-align:right">Calo</th><th style="text-align:right">Thao tác</th></tr></thead>
+            <tbody id="food-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="paper-card paper-card__body">
+        <h2 class="section-title">Món từng dùng còn tồn tại</h2>
+        <p class="section-note">Đây chính là nguồn đề xuất ở Trang chủ. Một món chỉ biến mất khỏi đề xuất khi không còn bản ghi nào của món đó trong lịch sử.</p>
+        <div class="history-hint-list" id="food-memory" style="margin-top:12px"></div>
+      </section>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Điều hướng chính">
+    <a class="nav-link" href="index.html"><svg class="icon"><use href="assets/icons.svg#home"></use></svg><span>Trang chủ</span></a>
+    <a class="nav-link active" href="nutrition.html"><svg class="icon"><use href="assets/icons.svg#nutrition"></use></svg><span>Dinh dưỡng</span></a>
+    <a class="nav-link" href="notes.html"><svg class="icon"><use href="assets/icons.svg#note"></use></svg><span>Ghi chú</span></a>
+    <a class="nav-link" href="profile.html"><svg class="icon"><use href="assets/icons.svg#profile"></use></svg><span>Cá nhân</span></a>
+  </nav>
+
+  <script type="module" src="js/pages/nutrition.js"></script>
+</body>
+</html>

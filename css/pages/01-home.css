@@ -1,0 +1,100 @@
+.date-switcher {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.calorie-card {
+  padding: 16px 14px 14px;
+  background: linear-gradient(145deg, #fffdf7 0 72%, #f4e7bf 72% 100%);
+}
+.calorie-card h2 {
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+}
+.calorie-dashboard {
+  display: grid;
+  grid-template-columns: minmax(72px,1fr) 20px minmax(72px,1fr) 20px minmax(72px,1fr) 20px minmax(72px,1fr);
+  align-items: center;
+  gap: 3px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+}
+.cal-item {
+  min-width: 0;
+  padding: 10px 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: rgba(255,255,255,.58);
+  text-align: center;
+}
+.cal-item strong,
+.cal-item span {
+  display: block;
+  font-size: clamp(1rem, 4.8vw, 1.35rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cal-item label {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: .66rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.cal-item.highlight { background: var(--sage-soft); border-style: solid; }
+.cal-math { text-align: center; color: var(--ink-soft); font-size: 1.05rem; font-weight: 900; }
+.meal-section { padding: 14px; }
+.meal-section[data-meal="breakfast"] { border-top: 5px solid var(--mustard); }
+.meal-section[data-meal="lunch"] { border-top: 5px solid var(--sage); }
+.meal-section[data-meal="snack"] { border-top: 5px solid var(--blue); }
+.meal-section[data-meal="dinner"] { border-top: 5px solid var(--coral); }
+.meal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+.meal-total { color: var(--ink-soft); font-size: .78rem; font-weight: 850; }
+.quick-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px 44px;
+  gap: 7px;
+  align-items: center;
+}
+.quick-entry__name { position: relative; min-width: 0; }
+.quick-entry .input { min-width: 0; }
+.saved-lines { display: grid; gap: 6px; margin-top: 10px; }
+.saved-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 3px 0;
+  border-top: 1px dashed var(--line);
+  font-size: .82rem;
+}
+.saved-line strong { font-variant-numeric: tabular-nums; }
+.home-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+.tool-card { padding: 14px; }
+.tool-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tool-head .icon { width: 22px; height: 22px; }
+.exercise-row { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 7px; }
+.water-stepper {
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+.water-count { text-align: center; }
+.water-count strong { display: block; font-size: 1.35rem; }
+.water-count span { color: var(--ink-soft); font-size: .72rem; font-weight: 750; }

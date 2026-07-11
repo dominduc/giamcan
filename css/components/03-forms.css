@@ -1,0 +1,85 @@
+.field { display: grid; gap: 6px; }
+.field label {
+  color: var(--ink-soft);
+  font-size: .78rem;
+  font-weight: 850;
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1.4px solid var(--line-strong);
+  border-radius: 12px;
+  outline: none;
+  color: var(--ink);
+  background: rgba(255,255,255,.74);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--mustard-soft);
+}
+.button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-strong);
+  box-shadow: 2px 2px 0 rgba(32,35,31,.18);
+  font-weight: 850;
+  cursor: pointer;
+}
+.button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(32,35,31,.18); }
+.button.primary { background: var(--sage-soft); }
+.button.warm { background: var(--mustard-soft); }
+.button.danger { color: var(--danger); background: #fff8f6; }
+.button.ghost { border-color: var(--line); box-shadow: none; background: transparent; }
+.icon-button {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-strong);
+  box-shadow: 2px 2px 0 rgba(32,35,31,.16);
+  cursor: pointer;
+}
+.icon-button .icon { width: 20px; height: 20px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.suggestion-box {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-strong);
+  box-shadow: var(--shadow-hard);
+}
+.suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  background: transparent;
+  text-align: left;
+}
+.suggestion-item:last-child { border-bottom: 0; }
+.suggestion-item small { color: var(--ink-soft); }

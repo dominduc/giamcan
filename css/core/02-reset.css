@@ -1,0 +1,31 @@
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body, h1, h2, h3, h4, p { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button { color: inherit; }
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; }
+body {
+  min-height: 100dvh;
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(255,255,255,.48), rgba(255,255,255,.48)),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(113,137,159,.08) 27px 28px),
+    var(--paper);
+  -webkit-tap-highlight-color: transparent;
+}
+button, [role="button"] { touch-action: manipulation; }
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
