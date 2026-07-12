@@ -101,6 +101,8 @@ Dùng để:
 
 Sau khi lưu hồ sơ, form thiết lập bị khóa. Muốn nhập lại từ đầu phải dùng nút **Xóa toàn bộ dữ liệu**.
 
+Nếu vì lý do nào đó dữ liệu chỉ còn hồ sơ hoặc chỉ còn hành trình (thiếu một trong hai), app tự nhận ra và hiện lại form kèm dòng cảnh báo giải thích — chỉ cần điền và lưu lại là tự phục hồi, không cần thao tác gì thêm.
+
 ---
 
 ## Xác nhận ngày (chốt dữ liệu trước khi tính hành trình)
@@ -304,6 +306,8 @@ Sau đó mục tiêu calo mới được tính lại từ:
 
 Quy tắc tương tự áp dụng cho tăng cân khi thặng dư tích lũy đủ một mốc 1 kg.
 
+**Mốc mới chỉ có hiệu lực từ ngày hôm sau.** Ví dụ đang ở 90 kg, đúng ngày hôm nay năng lượng tích lũy vừa đủ để giảm xuống 89 kg: số liệu hiển thị của **hôm nay** (duy trì, chênh lệch, cân nặng) vẫn dùng mốc 90 kg — vì đó chính là con số đã thực sự dùng để tính ra kết quả đó. Mốc 89 kg chỉ "xuất hiện" và có hiệu lực kể từ **ngày mai**. Nhờ vậy chi tiết từng ngày trên biểu đồ luôn khớp chính xác với con số đã dùng để tính, kể cả đúng ngày đổi mốc.
+
 ---
 
 ## Cân thật có ưu tiên cao nhất
@@ -326,6 +330,10 @@ Kết quả:
 
 Cân thật là điểm neo có ưu tiên cao hơn mốc ước tính từ calo.
 
+Khác với mốc 1 kg tính từ calo (chỉ có hiệu lực từ ngày hôm sau), cân thật **có hiệu lực ngay trong đúng ngày nhập** — vì đây là số đo thật, không phải suy luận từ công thức, nên không cần "xếp hàng" chờ sang ngày mai.
+
+Ô ngày cân hiện cho chọn bất kỳ ngày nào trong khoảng hành trình (kể cả ngày trong tương lai so với hôm nay), không chỉ hôm nay trở về trước. Mỗi ngày chỉ có một mốc cân thật — nhập lại cùng một ngày sẽ ghi đè giá trị cũ, không tạo bản ghi thứ hai.
+
 ---
 
 ## Biểu đồ
@@ -336,7 +344,7 @@ Biểu đồ có 3 lớp dữ liệu:
    Đường tham chiếu từ cân ban đầu tới cân mục tiêu trong toàn bộ thời gian.
 
 2. **Ước tính từ calo**  
-   Đường dạng bậc, chỉ đổi khi đạt mốc 1 kg hoặc khi có cân thật.
+   Đường dạng bậc, chỉ đổi khi đạt mốc 1 kg hoặc khi có cân thật. Góc chuyển bậc được bo tròn nhẹ để bớt cảm giác biến động gấp, nhưng bản chất vẫn là bậc thang (đứng yên rồi mới nhảy đúng lúc đổi mốc), không phải một đường cong liên tục.
 
 3. **Cân thật**  
    Các điểm người dùng nhập thủ công.

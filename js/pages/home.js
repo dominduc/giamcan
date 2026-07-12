@@ -10,8 +10,9 @@ import {
   setDayConfirmed
 } from '../core/03-records.js';
 import { getCalorieTargetsForDate } from '../core/05-journey.js';
+import { getSharedSelectedDate, setSharedSelectedDate } from '../core/06-session.js';
 
-let selectedDate = localDateKey();
+let selectedDate = getSharedSelectedDate() || localDateKey();
 let todayKey = localDateKey();
 
 const dateInput = document.querySelector('#date-picker');
@@ -25,7 +26,7 @@ function init() {
   document.querySelector('[data-date-next]').addEventListener('click', () => changeDate(1));
   dateInput.addEventListener('change', () => {
     if (!dateInput.value) return;
-    selectedDate = dateInput.value;
+    setSelectedDate(dateInput.value);
     render();
   });
 
@@ -39,9 +40,14 @@ function init() {
   window.addEventListener('storage', render);
 }
 
-function changeDate(direction) {
-  selectedDate = shiftDateKey(selectedDate, direction);
+function setSelectedDate(newDate) {
+  selectedDate = newDate;
   dateInput.value = selectedDate;
+  setSharedSelectedDate(selectedDate);
+}
+
+function changeDate(direction) {
+  setSelectedDate(shiftDateKey(selectedDate, direction));
   render();
 }
 
@@ -227,8 +233,7 @@ function render() {
 function syncDateBeforeAction() {
   const newToday = localDateKey();
   if (selectedDate === todayKey && newToday !== todayKey) {
-    selectedDate = newToday;
-    dateInput.value = selectedDate;
+    setSelectedDate(newToday);
   }
   todayKey = newToday;
 }
@@ -237,8 +242,7 @@ function checkMidnightBoundary() {
   const newToday = localDateKey();
   if (newToday === todayKey) return;
   if (selectedDate === todayKey) {
-    selectedDate = newToday;
-    dateInput.value = selectedDate;
+    setSelectedDate(newToday);
     render();
   }
   todayKey = newToday;

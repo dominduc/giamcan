@@ -6,15 +6,20 @@
 }
 .data-table {
   width: 100%;
-  min-width: 580px;
   border-collapse: collapse;
+  table-layout: fixed;
 }
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) { width: 70px; }
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) { width: 104px; }
 .data-table th,
 .data-table td {
   padding: 11px 10px;
   border-bottom: 1px dashed var(--line);
   text-align: left;
   vertical-align: middle;
+  word-break: break-word;
 }
 .data-table th {
   background: var(--mustard-soft);

@@ -20,7 +20,10 @@ export function getWeeklyWeights() {
 }
 
 export function saveProfileAndJourney(profile, journey) {
-  if (getProfile() || getJourney()) {
+  // Chỉ chặn khi CẢ HAI đã tồn tại — tức hành trình thật sự hoàn chỉnh.
+  // Nếu chỉ còn một trong hai (dữ liệu lỗi/dở dang), coi như chưa có hành
+  // trình hợp lệ và cho phép lưu lại để tự phục hồi, thay vì kẹt cứng.
+  if (getProfile() && getJourney()) {
     throw new Error('Hành trình đã được thiết lập. Muốn nhập lại từ đầu, hãy xóa toàn bộ dữ liệu ở cuối trang Cá nhân.');
   }
 
@@ -37,7 +40,6 @@ export function saveWeeklyWeight(date, weight) {
   if (date > journey.endDate) {
     throw new Error('Mốc cân thực tế phải nằm trong thời gian của hành trình.');
   }
-  if (date > localDateKey()) throw new Error('Không thể nhập cân nặng cho ngày tương lai.');
 
   const numericWeight = Number(weight);
   if (!Number.isFinite(numericWeight) || numericWeight <= 0) {
@@ -82,8 +84,14 @@ export function resetJourneyOnly() {
  *    journey.startWeight tuyệt đối không bị sửa.
  * 4. Khi có cân thật, phần năng lượng tích lũy dở dang trước đó bị reset,
  *    vì mốc thực tế đã hiệu chỉnh lại sai số của phép ước tính.
+ *
+ * capToToday (mặc định true): giới hạn mô phỏng không vượt quá hôm nay,
+ * vì app không đoán trước dữ liệu ăn/tập của những ngày chưa tới. Đặt
+ * false khi cần xem trước hiệu ứng của các mốc cân thật đã nhập cho ngày
+ * tương lai (ví dụ khi đang test biểu đồ) — chỉ dùng cho việc vẽ biểu đồ,
+ * không dùng cho các phép tính "hiện tại" như mục tiêu calo hôm nay.
  */
-export function simulateJourney({ throughDate = localDateKey(), includeFuturePlan = true } = {}) {
+export function simulateJourney({ throughDate = localDateKey(), includeFuturePlan = true, capToToday = true } = {}) {
   const profile = getProfile();
   const journey = getJourney();
   if (!profile || !journey) return null;
@@ -91,7 +99,9 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
   const records = getAllRecords();
   const checkins = new Map(getWeeklyWeights().map(item => [item.date, Number(item.weight)]));
   const today = localDateKey();
-  const actualEnd = minDateKey(throughDate, today, journey.endDate);
+  const actualEnd = capToToday
+    ? minDateKey(throughDate, today, journey.endDate)
+    : minDateKey(throughDate, journey.endDate);
   const totalDays = Math.max(1, daysBetween(journey.startDate, journey.endDate));
 
   const estimated = [];
@@ -118,7 +128,8 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
   for (let i = 0; i <= estimateDays; i += 1) {
     const date = shiftDateKey(journey.startDate, i);
 
-    // Cân thật được áp dụng TRƯỚC phép tính của ngày đó và có ưu tiên cao nhất.
+    // Cân thật ghi đè NGAY trong ngày nhập — đây là số đo thật, không phải
+    // suy luận, nên không cần "xếp hàng" như mốc tính từ calo.
     if (i > 0 && checkins.has(date)) {
       currentWeight = Number(checkins.get(date));
       accumulatedEnergy = 0;
@@ -132,6 +143,15 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
       }));
     }
 
+    // Ảnh chụp đầu ngày: toàn bộ số liệu HIỂN THỊ và phép tính của ngày hôm
+    // nay đều dùng đúng cân nặng/mục tiêu đang có hiệu lực tại đầu ngày.
+    // Nếu trong ngày tích đủ mốc 1kg, cân mới KHÔNG chen vào ngày hôm nay —
+    // nó chỉ có hiệu lực từ ngày mai, nên số liệu ngày hôm nay luôn khớp với
+    // đúng con số đã thực sự được dùng để tính ra kết quả đó.
+    const dayStartWeight = currentWeight;
+    const dayStartMaintenance = calculateMaintenanceCalories(profile, dayStartWeight);
+    const dayStartTarget = activeTarget;
+
     const day = normalizeDay(records[date]);
     const intake = getDayFoodCalories(day);
     const exercise = Number(day.exerciseCalories) || 0;
@@ -143,21 +163,21 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
     let dailyEnergyBalance = 0;
 
     if (hasLoggedEnergy) {
-      // Dùng cân nặng MỐC hiện tại, không dùng cân lẻ lý thuyết.
-      const maintenance = calculateMaintenanceCalories(profile, currentWeight);
-      dailyEnergyBalance = maintenance + exercise - intake;
+      dailyEnergyBalance = dayStartMaintenance + exercise - intake;
       accumulatedEnergy += dailyEnergyBalance;
 
-      // Chỉ thay đổi cân khi tích lũy đủ một bậc 1 kg.
-      // Số dư được giữ lại cho bậc tiếp theo.
+      // Đủ một bậc 1kg thì cân đổi, nhưng chỉ có hiệu lực TỪ NGÀY MAI —
+      // xếp hàng, không chen ngược vào chính ngày đã dùng để tính ra nó.
+      const effectiveDate = shiftDateKey(date, 1);
+
       while (accumulatedEnergy >= KCAL_PER_KG_APPROX) {
         currentWeight = roundWeight(currentWeight - 1);
         accumulatedEnergy -= KCAL_PER_KG_APPROX;
 
-        milestones.push({ date, weight: currentWeight, direction: 'down' });
-        activeTarget = createTarget(profile, journey, currentWeight, date);
+        milestones.push({ date: effectiveDate, weight: currentWeight, direction: 'down' });
+        activeTarget = createTarget(profile, journey, currentWeight, effectiveDate);
         targetEvents.push(createTargetEvent({
-          date,
+          date: effectiveDate,
           weight: currentWeight,
           reason: 'energy-milestone',
           target: activeTarget
@@ -168,10 +188,10 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
         currentWeight = roundWeight(currentWeight + 1);
         accumulatedEnergy += KCAL_PER_KG_APPROX;
 
-        milestones.push({ date, weight: currentWeight, direction: 'up' });
-        activeTarget = createTarget(profile, journey, currentWeight, date);
+        milestones.push({ date: effectiveDate, weight: currentWeight, direction: 'up' });
+        activeTarget = createTarget(profile, journey, currentWeight, effectiveDate);
         targetEvents.push(createTargetEvent({
-          date,
+          date: effectiveDate,
           weight: currentWeight,
           reason: 'energy-milestone',
           target: activeTarget
@@ -181,11 +201,13 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
 
     estimated.push({
       date,
-      weight: roundWeight(currentWeight),
+      weight: roundWeight(dayStartWeight),
       accumulatedEnergy: roundEnergy(accumulatedEnergy),
       dailyEnergyBalance: roundEnergy(dailyEnergyBalance),
-      targetCalories: activeTarget.targetCalories,
-      maintenance: calculateMaintenanceCalories(profile, currentWeight)
+      targetCalories: dayStartTarget.targetCalories,
+      maintenance: dayStartMaintenance,
+      requiredDailyBalance: dayStartTarget.requiredDailyBalance,
+      softFloorApplied: dayStartTarget.softFloorApplied
     });
   }
 
@@ -199,6 +221,11 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
     }
   }
 
+  // "Hiện tại" luôn khớp với đúng ảnh chụp của ngày cuối cùng đã mô phỏng —
+  // kể cả khi ngày đó vừa đủ mốc 1kg (giá trị mới chỉ thật sự "hiện diện"
+  // từ ngày mai, nên chưa được coi là hiện tại ở đây).
+  const lastPoint = estimated.at(-1);
+
   return {
     profile,
     journey,
@@ -207,9 +234,16 @@ export function simulateJourney({ throughDate = localDateKey(), includeFuturePla
     checkinPoints,
     milestones,
     targetEvents,
-    currentWeight: roundWeight(currentWeight),
+    currentWeight: lastPoint ? lastPoint.weight : roundWeight(currentWeight),
     accumulatedEnergy: roundEnergy(accumulatedEnergy),
-    activeTarget
+    activeTarget: lastPoint
+      ? {
+          targetCalories: lastPoint.targetCalories,
+          maintenance: lastPoint.maintenance,
+          requiredDailyBalance: lastPoint.requiredDailyBalance,
+          softFloorApplied: lastPoint.softFloorApplied
+        }
+      : activeTarget
   };
 }
 
@@ -239,7 +273,9 @@ export function getCalorieTargetsForDate(dateKey) {
   const simulation = simulateJourney({ throughDate: dateKey, includeFuturePlan: false });
   if (!simulation) return null;
 
-  const lastTargetEvent = simulation.targetEvents.at(-1);
+  // Không lấy event mốc 1kg vừa "xếp hàng cho ngày mai" nếu nó vượt quá
+  // đúng ngày đang hỏi — event đó chưa thật sự có hiệu lực tại dateKey.
+  const lastTargetEvent = [...simulation.targetEvents].reverse().find(event => event.date <= dateKey);
   return {
     ...simulation.activeTarget,
     currentWeight: simulation.currentWeight,

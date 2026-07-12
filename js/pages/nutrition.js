@@ -8,8 +8,9 @@ import {
   updateFood
 } from '../core/03-records.js';
 import { getCalorieTargetsForDate } from '../core/05-journey.js';
+import { getSharedSelectedDate, setSharedSelectedDate } from '../core/06-session.js';
 
-let selectedDate = localDateKey();
+let selectedDate = getSharedSelectedDate() || localDateKey();
 let editing = null;
 
 const dateInput = document.querySelector('#date-picker');
@@ -23,7 +24,7 @@ function init() {
   document.querySelector('[data-date-next]').addEventListener('click', () => changeDate(1));
   dateInput.addEventListener('change', () => {
     if (!dateInput.value) return;
-    selectedDate = dateInput.value;
+    setSelectedDate(dateInput.value);
     editing = null;
     render();
   });
@@ -31,9 +32,14 @@ function init() {
   window.addEventListener('storage', render);
 }
 
-function changeDate(direction) {
-  selectedDate = shiftDateKey(selectedDate, direction);
+function setSelectedDate(newDate) {
+  selectedDate = newDate;
   dateInput.value = selectedDate;
+  setSharedSelectedDate(selectedDate);
+}
+
+function changeDate(direction) {
+  setSelectedDate(shiftDateKey(selectedDate, direction));
   editing = null;
   render();
 }
@@ -46,7 +52,7 @@ function render() {
   }
 
   tbody.innerHTML = items.length ? items.map(renderRow).join('') : `
-    <tr><td colspan="4"><div class="empty-state">Ngày này chưa có món ăn nào.</div></td></tr>
+    <tr><td colspan="3"><div class="empty-state">Ngày này chưa có món ăn nào.</div></td></tr>
   `;
 
   bindRows();
@@ -58,10 +64,12 @@ function renderRow(item) {
   const isEditing = editing?.id === item.id && editing?.meal === item.meal;
   return `
     <tr data-row data-id="${item.id}" data-meal="${item.meal}">
-      <td><span class="meal-tag meal-tag--${item.meal}">${item.mealLabel}</span></td>
-      <td>${isEditing
-        ? `<input class="edit-row-input" data-edit-name value="${escapeHtml(item.name)}">`
-        : escapeHtml(item.name)}</td>
+      <td>
+        <span class="meal-tag meal-tag--${item.meal}">${item.mealLabel}</span>
+        ${isEditing
+          ? `<input class="edit-row-input" data-edit-name value="${escapeHtml(item.name)}">`
+          : `<div class="food-name-text">${escapeHtml(item.name)}</div>`}
+      </td>
       <td class="num">${isEditing
         ? `<input class="edit-row-input" data-edit-cal type="number" min="0" step="1" value="${Number(item.calories)}">`
         : `${Math.round(item.calories)} kcal`}</td>
@@ -144,4 +152,3 @@ function escapeHtml(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   })[char]);
 }
-

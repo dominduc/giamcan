@@ -127,7 +127,7 @@ js/pages/notes.js
 
 Trang hành trình:
 
-- form thiết lập một lần;
+- form thiết lập một lần (kèm `#profile-recovery-note` — dòng cảnh báo ẩn, chỉ hiện khi phát hiện dữ liệu hồ sơ/hành trình bị thiếu một phần);
 - dashboard;
 - biểu đồ;
 - zoom;
@@ -269,6 +269,8 @@ Hàm quan trọng:
 
 Trong `05-journey.js` hiện vẫn còn helper `resetJourneyOnly()`, nhưng UI hiện tại không dùng helper này.
 
+`saveProfileAndJourney()` chỉ chặn tạo mới khi **CẢ HAI** key `PROFILE` và `JOURNEY` cùng tồn tại (hành trình thật sự hoàn chỉnh). Nếu vì lỗi dữ liệu mà chỉ còn một trong hai, hàm cho phép ghi đè để tự phục hồi, thay vì kẹt cứng — khớp đúng với điều kiện `hasJourney` mà `profile.js` dùng để quyết định hiện dashboard hay form.
+
 ## `js/core/02-date.js`
 
 Chịu trách nhiệm:
@@ -351,6 +353,8 @@ milestones
 checkinPoints
 ```
 
+`simulateJourney()` nhận thêm tùy chọn `capToToday` (mặc định `true`, giữ nguyên hành vi cũ: không mô phỏng vượt quá hôm nay). `profile.js` đặt `capToToday: false` riêng cho việc vẽ biểu đồ, để các mốc cân thật đã nhập cho ngày tương lai (phục vụ test) hiển thị ngay, không cần chờ tới đúng ngày đó. Các hàm khác (`getEstimatedWeightForDate`, `getCalorieTargetsForDate`, và khối tóm tắt "Cân hiện tại" ở Trang Cá nhân) vẫn dùng mặc định `true` nên không bị dữ liệu test làm sai lệch.
+
 ### Quy tắc bất biến
 
 ```text
@@ -383,16 +387,20 @@ Khi đạt:
 
 thì mốc cân tăng 1 kg.
 
+**Mốc mới có hiệu lực từ ngày hôm sau, không chen vào chính ngày đã tính ra nó.** Mỗi ngày trong vòng lặp mô phỏng có một "ảnh chụp đầu ngày" (`dayStartWeight`, `dayStartMaintenance`, `dayStartTarget`) — toàn bộ số liệu hiển thị và phép tính của ngày đó (kể cả `estimated[i].weight`) đều dùng đúng ảnh chụp này, dù trong ngày có đủ 7700 kcal để đổi mốc hay không. Nếu đổi mốc, `currentWeight`/`activeTarget` chỉ được cập nhật để dùng cho vòng lặp của **ngày kế tiếp** (`effectiveDate = shiftDateKey(date, 1)`), áp dụng cho cả cân nặng, mục tiêu calo lẫn vị trí hiển thị mốc (`milestones`) trên biểu đồ. Điều này đảm bảo chi tiết từng ngày (kể cả đúng ngày đổi mốc) luôn khớp chính xác với con số đã thực sự dùng để tính ra nó — trước đây đây là nguồn gây lệch số liệu ở phần chi tiết biểu đồ.
+
 ### Quy tắc cân thật
 
 Tại ngày có check-in:
 
-1. cân thật được áp dụng;
+1. cân thật được áp dụng NGAY trong ngày đó (không xếp hàng như mốc tính từ calo, vì đây là số đo thật);
 2. cân thật trở thành mốc hiện tại;
 3. `accumulatedEnergy` về 0;
 4. mục tiêu calo được tính lại;
 5. các ngày sau tính tiếp từ mốc thật mới;
 6. `startWeight` không đổi.
+
+`saveWeeklyWeight()` không còn chặn ngày tương lai — chỉ còn ràng buộc ngày phải sau `journey.startDate` và không vượt `journey.endDate`. Mỗi ngày chỉ có một mốc (`weights.find(item => item.date === date)`); nhập lại cùng ngày sẽ ghi đè giá trị cũ thay vì tạo bản ghi mới.
 
 ### Quy tắc xác nhận ngày
 
@@ -448,11 +456,12 @@ Nhiệm vụ:
 
 - tạo hồ sơ lần đầu;
 - khóa form sau khi đã có hành trình;
+- phát hiện và cảnh báo khi dữ liệu hồ sơ/hành trình chỉ còn một phần, cho phép tự phục hồi bằng cách lưu lại form;
 - render summary;
-- lưu cân thật;
-- render biểu đồ SVG;
+- lưu cân thật (nhận cả ngày tương lai);
+- render biểu đồ SVG (đường ước tính bo tròn góc chuyển bậc, mô phỏng không giới hạn ở hôm nay để hiện được các mốc cân thật nhập cho tương lai);
 - zoom biểu đồ;
-- hiển thị chi tiết ngày (chênh lệch năng lượng chỉ hiện khi ngày đó đã xác nhận);
+- hiển thị chi tiết ngày (dùng thẳng `maintenance` đã được mô phỏng lưu sẵn cho ngày đó, không tính lại; chênh lệch năng lượng chỉ hiện khi ngày đó đã xác nhận);
 - reset toàn bộ dữ liệu.
 
 ---

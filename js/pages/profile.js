@@ -136,9 +136,11 @@ function render() {
   const profile = getProfile();
   const journey = getJourney();
   const hasJourney = Boolean(profile && journey);
+  const isPartial = Boolean(profile) !== Boolean(journey);
 
   dashboard.classList.toggle('hidden', !hasJourney);
   formCard.hidden = hasJourney;
+  document.querySelector('#profile-recovery-note').classList.toggle('hidden', !isPartial);
 
   if (!hasJourney) {
     setDefaultDates();
@@ -179,7 +181,7 @@ function renderCheckins(journey) {
   const list = document.querySelector('#checkin-history');
   const weights = getWeeklyWeights();
   document.querySelector('#checkin-date').min = shiftDateKey(journey.startDate, 1);
-  document.querySelector('#checkin-date').max = localDateKey();
+  document.querySelector('#checkin-date').max = journey.endDate;
 
   list.innerHTML = weights.length
     ? weights.slice().reverse().map(item => `
@@ -200,10 +202,15 @@ function renderCheckins(journey) {
 }
 
 function renderChart() {
-  const simulation = simulateJourney();
+  const journey = getJourney();
+  if (!journey) return;
+  // Không giới hạn ở "hôm nay": nếu đã nhập mốc cân thật cho ngày tương lai
+  // (ví dụ khi đang test biểu đồ), đường ước tính vẫn cần phản ánh ngay,
+  // không phải chờ tới đúng ngày đó mới hiện.
+  const simulation = simulateJourney({ throughDate: journey.endDate, capToToday: false });
   if (!simulation) return;
 
-  const { journey, planned, estimated, checkinPoints, milestones } = simulation;
+  const { planned, estimated, checkinPoints, milestones } = simulation;
   const svg = document.querySelector('#weight-chart');
   const totalDays = Math.max(1, daysBetween(journey.startDate, journey.endDate));
   const width = Math.max(720, totalDays * 3) * zoomLevel;
@@ -273,8 +280,11 @@ function renderChartDetail(point) {
   if (!point) return;
   const day = getDayRecord(point.date);
   const intake = getDayFoodCalories(day);
-  const profile = getProfile();
-  const maintenance = calculateMaintenanceCalories(profile, point.weight);
+  // Dùng đúng con số duy trì đã được mô phỏng lưu lại cho ngày này (tính từ
+  // cân đầu ngày), không tính lại từ point.weight — vì nếu hôm đó vừa đủ
+  // mốc 1kg, point.weight vẫn là cân đầu ngày, còn tính lại có thể vô tình
+  // lệch nếu logic sau này đổi. Lấy thẳng từ nguồn duy nhất tránh sai số.
+  const maintenance = point.maintenance;
   const deficit = day.confirmed
     ? maintenance + day.exerciseCalories - intake
     : 0;
@@ -290,16 +300,54 @@ function pathFromPoints(points, x, y) {
   return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(point.date).toFixed(2)} ${y(point.weight).toFixed(2)}`).join(' ');
 }
 
-// Đường cân ước tính đi theo bậc: giữ nguyên cân cho tới khi đủ 1 kg,
-// sau đó mới nhảy sang mốc mới. Cân thật hàng tuần cũng tạo một bậc mới.
-function stepPathFromPoints(points, x, y) {
+// Đường cân ước tính vẫn đi theo bậc (đứng yên cho tới khi đủ 1 kg hoặc có
+// cân thật, rồi mới nhảy sang mốc mới) nhưng góc chuyển bậc được bo tròn nhẹ
+// để bớt cảm giác biến động gấp, thay vì góc vuông 90 độ.
+function stepPathFromPoints(points, x, y, radius = 7) {
   if (!points.length) return '';
 
-  let path = `M ${x(points[0].date).toFixed(2)} ${y(points[0].weight).toFixed(2)}`;
-
+  // Dữ liệu gốc có một điểm mỗi ngày; chỉ giữ lại các điểm cân THẬT SỰ đổi
+  // để xác định vị trí các góc bậc thang cần bo tròn.
+  const corners = [points[0]];
   for (let index = 1; index < points.length; index += 1) {
-    const point = points[index];
-    path += ` H ${x(point.date).toFixed(2)} V ${y(point.weight).toFixed(2)}`;
+    if (points[index].weight !== points[index - 1].weight) corners.push(points[index]);
+  }
+  const lastPoint = points[points.length - 1];
+  if (corners[corners.length - 1] !== lastPoint) corners.push(lastPoint);
+
+  if (corners.length === 1) {
+    return `M ${x(corners[0].date).toFixed(2)} ${y(corners[0].weight).toFixed(2)}`;
+  }
+
+  let path = `M ${x(corners[0].date).toFixed(2)} ${y(corners[0].weight).toFixed(2)}`;
+
+  for (let index = 1; index < corners.length; index += 1) {
+    const prev = corners[index - 1];
+    const curr = corners[index];
+    const xJump = x(curr.date);
+    const xPrev = x(prev.date);
+    const yLevel = y(prev.weight);
+    const yNext = y(curr.weight);
+    const jumpHeight = Math.abs(yNext - yLevel);
+
+    if (jumpHeight < 0.5) {
+      path += ` L ${xJump.toFixed(2)} ${yLevel.toFixed(2)}`;
+      continue;
+    }
+
+    const r = Math.min(radius, (xJump - xPrev) / 2, jumpHeight / 2);
+    const verticalSign = yNext > yLevel ? 1 : -1;
+    const isLastCorner = index === corners.length - 1;
+
+    path += ` L ${(xJump - r).toFixed(2)} ${yLevel.toFixed(2)}`;
+    path += ` Q ${xJump.toFixed(2)} ${yLevel.toFixed(2)} ${xJump.toFixed(2)} ${(yLevel + r * verticalSign).toFixed(2)}`;
+
+    if (isLastCorner) {
+      path += ` L ${xJump.toFixed(2)} ${yNext.toFixed(2)}`;
+    } else {
+      path += ` L ${xJump.toFixed(2)} ${(yNext - r * verticalSign).toFixed(2)}`;
+      path += ` Q ${xJump.toFixed(2)} ${yNext.toFixed(2)} ${(xJump + r).toFixed(2)} ${yNext.toFixed(2)}`;
+    }
   }
 
   return path;

@@ -12,4 +12,8 @@
   .calorie-dashboard { grid-template-columns: minmax(64px,1fr) 16px minmax(64px,1fr) 16px minmax(64px,1fr) 16px minmax(64px,1fr); }
   .cal-item { padding-inline: 4px; }
   .profile-summary { grid-template-columns: 1fr; }
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) { width: 92px; }
+  .table-actions { gap: 4px; }
+  .table-actions button { width: 32px; height: 32px; }
 }

@@ -1,4 +1,5 @@
 import { KEYS, readJson, writeJson } from '../core/01-storage.js';
+import { clearSharedSelectedDate } from '../core/06-session.js';
 
 const titleInput = document.querySelector('#note-title');
 const editor = document.querySelector('#note-editor');
@@ -8,6 +9,7 @@ let saveTimer = null;
 init();
 
 function init() {
+  clearSharedSelectedDate();
   const note = readJson(KEYS.NOTE, { title: '', html: '', updatedAt: null });
   titleInput.value = note.title || '';
   editor.innerHTML = note.html || '';

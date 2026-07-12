@@ -11,12 +11,12 @@
   <main class="app-shell">
     <header class="page-header">
       <div><p class="page-kicker">Hành trình của bạn</p><h1 class="page-title">Cá nhân</h1></div>
-      <span class="badge"><svg class="icon"><use href="assets/icons.svg#scale"></use></svg> ước tính + cân thật</span>
     </header>
 
     <section class="paper-card profile-form-card" id="profile-form-card">
       <h2 class="section-title">Thiết lập hành trình</h2>
       <p class="section-note">Mức hoạt động bên dưới là vận động nền của việc học / công việc. Calo tập thể dục chủ động vẫn nhập riêng ở Trang chủ để tránh tính hai lần.</p>
+      <p id="profile-recovery-note" class="form-message hidden">Phát hiện dữ liệu hành trình bị thiếu (chỉ còn một phần). Nhập lại đầy đủ bên dưới và lưu để tự phục hồi — dữ liệu cũ không đầy đủ sẽ được thay bằng dữ liệu bạn nhập lại ở đây.</p>
 
       <form id="profile-form" style="margin-top:14px">
         <div class="form-grid">
@@ -41,9 +41,9 @@
           <p class="section-note" id="journey-dates">—</p>
         </div>
         <div class="profile-summary">
-          <div class="stat-chip"><strong id="current-weight">—</strong><span>Cân hiện tại ước tính / mốc thật</span></div>
+          <div class="stat-chip"><strong id="current-weight">—</strong><span>Cân hiện tại ước tính/thực tế</span></div>
           <div class="stat-chip"><strong id="maintenance-calories">—</strong><span>Calo duy trì hiện tại</span></div>
-          <div class="stat-chip"><strong id="target-calories">—</strong><span>Mục tiêu nạp hiện tại</span></div>
+          <div class="stat-chip"><strong id="target-calories">—</strong><span>Calo tối đa hiện tại</span></div>
           <div class="stat-chip"><strong id="journey-progress">—</strong><span>Tiến độ thời gian</span></div>
         </div>
         <p id="target-caution" class="form-message hidden">Lịch trình đang đòi hỏi mức nạp rất thấp, nên app đã chặn tại ngưỡng kỹ thuật bảo thủ. Đây chỉ là ước tính ghi chép, không phải chỉ định y khoa.</p>
@@ -51,8 +51,8 @@
 
       <section class="paper-card chart-card">
         <div class="chart-toolbar">
-          <div><h2 class="section-title">Biểu đồ cân nặng</h2><p class="section-note">Kéo ngang để xem xa hơn. Chạm vào đường ước tính để xem chi tiết ngày.</p></div>
-          <div class="zoom-group" aria-label="Zoom biểu đồ">
+          <div><h2 class="section-title">Biểu đồ cân nặng</h2><p class="section-note"></div>
+          <div class="zoom-group" aria-label="Zoom biểu đồ">    
             <button class="zoom-btn active" type="button" data-zoom="1">1×</button>
             <button class="zoom-btn" type="button" data-zoom="2">2×</button>
             <button class="zoom-btn" type="button" data-zoom="4">4×</button>
@@ -69,7 +69,6 @@
 
       <section class="paper-card checkin-card">
         <h2 class="section-title">Cập nhật cân nặng thực tế</h2>
-        <p class="section-note">Mốc này có ưu tiên cao hơn ước tính. Ví dụ bắt đầu 80 kg, ngày 10 app ước tính 75 kg nhưng bạn cân thật 77 kg: điểm ngày 10 đổi thành 77 kg và các ngày sau tính tiếp từ 77 kg. Mốc 80 kg ban đầu không bị thay đổi.</p>
         <div class="checkin-row" style="margin-top:12px">
           <div class="field"><label for="checkin-date">Ngày cân</label><input class="input" id="checkin-date" type="date"></div>
           <div class="field"><label for="checkin-weight">Cân nặng (kg)</label><input class="input" id="checkin-weight" type="number" min="1" step="0.1" inputmode="decimal" placeholder="Ví dụ 77"></div>
@@ -81,7 +80,6 @@
 
       <section class="paper-card profile-danger-zone">
         <h2 class="section-title">Xóa toàn bộ dữ liệu</h2>
-        <p class="section-note">Xóa toàn bộ dữ liệu của app trên máy này: hồ sơ, hành trình, nhật ký ăn uống, lịch sử món ăn dùng để đề xuất, tập thể dục, nước, các mốc cân thực tế và ghi chú. Sau khi xóa, form thiết lập ban đầu sẽ hiện lại.</p>
         <button class="button danger" id="reset-journey" type="button" style="margin-top:12px"><svg class="icon"><use href="assets/icons.svg#trash"></use></svg>Xóa toàn bộ dữ liệu</button>
       </section>
     </div>

@@ -11,7 +11,6 @@
   <main class="app-shell">
     <header class="page-header">
       <div><p class="page-kicker">Nhật ký năng lượng</p><h1 class="page-title">Dinh dưỡng</h1></div>
-      <span class="badge"><svg class="icon"><use href="assets/icons.svg#nutrition"></use></svg> sửa &amp; xóa</span>
     </header>
 
     <div class="date-switcher">
@@ -37,13 +36,13 @@
         </div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Bữa</th><th>Món ăn</th><th style="text-align:right">Calo</th><th style="text-align:right">Thao tác</th></tr></thead>
+            <thead><tr><th>Món ăn</th><th style="text-align:right">Calo</th><th style="text-align:right">Thao tác</th></tr></thead>
             <tbody id="food-table-body"></tbody>
           </table>
         </div>
       </section>
 
-      <section class="paper-card paper-card__body">
+      <section class="paper-card paper-card__body hidden">
         <h2 class="section-title">Món từng dùng còn tồn tại</h2>
         <p class="section-note">Đây chính là nguồn đề xuất ở Trang chủ. Một món chỉ biến mất khỏi đề xuất khi không còn bản ghi nào của món đó trong lịch sử.</p>
         <div class="history-hint-list" id="food-memory" style="margin-top:12px"></div>
